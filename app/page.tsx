@@ -1,7 +1,13 @@
 import { UserProfile } from "@/components/auth/user-profile";
 import { MapView } from "@/components/map/map-view";
+import { isAdmin } from "@/lib/admin-check";
+import Link from "next/link";
+import { ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export default function Home() {
+export default async function Home() {
+  const admin = await isAdmin();
+
   return (
     <div className="relative h-screen flex flex-col font-sans bg-background overflow-hidden">
       {/* Background decoration */}
@@ -27,13 +33,23 @@ export default function Home() {
         </div>
         
         <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center bg-secondary/30 rounded-full px-4 py-1.5 border border-border/50 text-xs font-medium text-muted-foreground">
+          <div className="hidden sm:flex items-center bg-secondary/30 rounded-full px-4 py-1.5 border border-border/50 text-xs font-medium text-muted-foreground mr-2">
              <span className="relative flex h-2 w-2 mr-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
               Real-time Global Sync
           </div>
+          
+          {admin && (
+            <Button asChild variant="secondary" size="sm" className="hidden md:flex gap-2 rounded-full border border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-all">
+              <Link href="/admin/queue">
+                <ShieldCheck className="w-4 h-4" />
+                Moderation
+              </Link>
+            </Button>
+          )}
+
           <UserProfile />
         </div>
       </header>

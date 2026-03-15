@@ -2,7 +2,7 @@
 
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
-import { LogOut, User as UserIcon, Monitor, Moon, Sun, Settings, Heart } from "lucide-react";
+import { LogOut, User as UserIcon, Monitor, Moon, Sun, Settings, Heart, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTheme } from "next-themes";
@@ -60,7 +60,9 @@ export function UserProfile() {
           <div className="flex flex-col space-y-2 p-2">
             <div className="flex items-center justify-between">
               <p className="text-sm font-bold leading-none">{session.user.name}</p>
-              <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">PRO</span>
+              {(session.user as any).role === "admin" && (
+                <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">ADMIN</span>
+              )}
             </div>
             <p className="text-xs leading-none text-muted-foreground">
               @{session.user.email.split('@')[0]}
@@ -115,6 +117,14 @@ export function UserProfile() {
         <DropdownMenuSeparator className="bg-border/50" />
         
         <DropdownMenuGroup>
+          {(session.user as any).role === "admin" && (
+            <DropdownMenuItem asChild className="cursor-pointer gap-2 rounded-lg py-2 bg-primary/5 text-primary hover:bg-primary/10 transition-colors">
+              <Link href="/admin/queue" className="flex items-center gap-2 w-full">
+                <ShieldCheck className="w-4 h-4" />
+                <span className="font-bold">Moderation Queue</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem className="cursor-pointer gap-2 rounded-lg py-2">
             <Settings className="w-4 h-4 text-muted-foreground" />
             <span>Settings</span>

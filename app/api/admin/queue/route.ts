@@ -2,8 +2,12 @@ import { db } from "@/lib/db";
 import { pendingEvents } from "@/lib/schema";
 import { desc, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { isAdmin } from "@/lib/admin-check";
 
 export async function GET() {
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
   try {
     const queue = await db.select({
       id: pendingEvents.id,

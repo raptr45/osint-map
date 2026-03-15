@@ -3,8 +3,12 @@ import { pendingEvents, publishedEvents } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { pointSql } from "@/lib/map-logic";
+import { isAdmin } from "@/lib/admin-check";
 
 export async function POST(req: Request) {
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
   try {
     const { id, title, description, lng, lat, severity } = await req.json();
 

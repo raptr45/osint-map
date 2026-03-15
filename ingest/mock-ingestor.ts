@@ -43,10 +43,15 @@ async function simulateIngestion(rawText: string) {
   }
 }
 
-// Example Trigger: Imagine this came from a Telegram OSINT channel
-const mockReport = "Large explosion reported near the Okhmatdyt Children's Hospital in Kyiv. Multiple emergency vehicles on scene.";
+/**
+ * MOCK INGESTOR
+ * Simulates receiving raw intel and piping it through Gemini
+ */
 
-simulateIngestion(mockReport)
+const args = process.argv.slice(2);
+const MOCK_INTEL = args[0] || "Large explosion reported near the Okhmatdyt Children's Hospital in Kyiv. Multiple emergency vehicles on scene.";
+
+simulateIngestion(MOCK_INTEL)
   .then(() => process.exit(0))
   .catch((err) => {
     console.error(err);
