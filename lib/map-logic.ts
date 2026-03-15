@@ -17,7 +17,16 @@ export async function getEventsInViewport(
 ) {
   // Using PostGIS ST_Within and ST_MakeEnvelope
   // envelope: min_lng, min_lat, max_lng, max_lat, srid
-  return await db.select().from(publishedEvents).where(
+  return await db.select({
+    id: publishedEvents.id,
+    title: publishedEvents.title,
+    description: publishedEvents.description,
+    severity: publishedEvents.severity,
+    imageUrl: publishedEvents.imageUrl,
+    createdAt: publishedEvents.createdAt,
+    lng: sql<number>`ST_X(${publishedEvents.coordinates})`,
+    lat: sql<number>`ST_Y(${publishedEvents.coordinates})`,
+  }).from(publishedEvents).where(
     sql`ST_Within(
       ${publishedEvents.coordinates}, 
       ST_MakeEnvelope(${minLng}, ${minLat}, ${maxLng}, ${maxLat}, 4326)
