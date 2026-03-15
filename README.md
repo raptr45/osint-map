@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌐 OSINT Map
 
-## Getting Started
+A high-performance, real-time geopolitical mapping tool built with **Next.js**, **PostGIS**, and **Better-Auth**. Designed for speed, security, and clear geospatial intelligence.
 
-First, run the development server:
+## 🚀 Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **📍 Real-time Mapping**: Powered by MapLibre GL JS for smooth, high-volume data visualization.
+- **🔐 Secure Auth**: Built-in authentication with social providers (GitHub, Google) via Better-Auth.
+- **🌍 Geospatial Intelligence**: Native PostGIS integration for efficient viewport-based spatial queries.
+- **🌓 Adaptive UI**: Premium dark/light themes with a custom, integrated theme switcher.
+- **⚡ Modern Stack**: Next.js 15, Drizzle ORM, and Tailwind CSS 4.0.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Technology Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Core**: [Next.js](https://nextjs.org/) (App Router)
+- **Database**: [PostgreSQL](https://www.postgresql.org/) + [PostGIS](https://postgis.net/)
+- **ORM**: [Drizzle ORM](https://orm.drizzle.team/)
+- **Auth**: [Better-Auth](https://better-auth.com/)
+- **Map**: [MapLibre GL JS](https://maplibre.org/) + [React-Map-GL](https://visgl.github.io/react-map-gl/)
+- **UI**: [Shadcn UI](https://ui.shadcn.com/) + [Tailwind CSS 4.0](https://tailwindcss.com/)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛤️ Roadmap
 
-## Learn More
+- [x] Initial infrastructure and Auth setup
+- [x] PostGIS schema and spatial logic
+- [x] Map interface integration
+- [ ] Automated data ingestion pipeline (Telegram/RSS/Social)
+- [ ] Internal moderation dashboard
+- [ ] Live viewport-based event fetching
 
-To learn more about Next.js, take a look at the following resources:
+## 🛠️ Getting Started
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Clone the repository**
+2. **Install dependencies:** `pnpm install`
+3. **Setup Environment:** Copy `.env.example` to `.env` and fill in your database and auth credentials.
+4. **Push Database Schema:** `pnpm drizzle-kit push`
+5. **Run Development Server:** `pnpm dev`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Built for clarity and speed in geospatial intelligence.
