@@ -14,9 +14,10 @@ const stringSession = new StringSession(process.env.TELEGRAM_SESSION || "");
 const TARGET_CHANNELS = [
   "liveuamap", 
   "DeepStateUA",
-  "astrapress",
-  "rusbrief",
-  "shot_shot"
+  "clashreport",
+  "osintdefender",
+  "auroraintel",
+  "bnonews"
 ];
 
 async function startTelegramIngestor() {
