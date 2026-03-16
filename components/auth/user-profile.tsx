@@ -1,6 +1,7 @@
 "use client";
 
 import { authClient } from "@/lib/auth-client";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LogOut, User as UserIcon, Monitor, Moon, Sun, Settings, Heart, ShieldCheck } from "lucide-react";
 import Link from "next/link";
@@ -17,9 +18,32 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
+interface SessionUser {
+  id: string;
+  name: string;
+  email: string;
+  image?: string | null;
+  role?: "admin" | "user";
+  roleRequest?: "pending" | "rejected" | null;
+}
+
 export function UserProfile() {
   const { data: session, isPending } = authClient.useSession();
+  const user = session?.user as SessionUser | undefined;
   const { theme, setTheme } = useTheme();
+  const [loadingRequest, setLoadingRequest] = useState(false);
+
+  const handleRoleRequest = async () => {
+    setLoadingRequest(true);
+    try {
+      await fetch("/api/auth/role-request", { method: "POST" });
+      window.location.reload(); // Refresh to update session
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingRequest(false);
+    }
+  };
 
   if (isPending) {
     return (
@@ -58,14 +82,28 @@ export function UserProfile() {
       <DropdownMenuContent className="w-64 p-2 mt-2 backdrop-blur-xl bg-card/80 border-border/50" align="end">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-2 p-2">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-bold leading-none">{session.user.name}</p>
-              {(session.user as any).role === "admin" && (
-                <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">ADMIN</span>
+            <div className="flex flex-col space-y-1">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-bold leading-none">{user?.name}</p>
+                {user?.role === "admin" && (
+                  <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">ADMIN</span>
+                )}
+              </div>
+              {user?.role === "user" && user?.roleRequest && (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className={cn(
+                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full border",
+                    user.roleRequest === "pending" 
+                      ? "bg-amber-500/10 text-amber-500 border-amber-500/20" 
+                      : "bg-destructive/10 text-destructive border-destructive/20"
+                  )}>
+                    {user.roleRequest === "pending" ? "PENDING APPROVAL" : "REQUEST REJECTED"}
+                  </span>
+                </div>
               )}
             </div>
             <p className="text-xs leading-none text-muted-foreground">
-              @{session.user.email.split('@')[0]}
+              @{user?.email.split('@')[0]}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -117,7 +155,7 @@ export function UserProfile() {
         <DropdownMenuSeparator className="bg-border/50" />
         
         <DropdownMenuGroup>
-          {(session.user as any).role === "admin" && (
+          {user?.role === "admin" && (
             <DropdownMenuItem asChild className="cursor-pointer gap-2 rounded-lg py-2 bg-primary/5 text-primary hover:bg-primary/10 transition-colors">
               <Link href="/admin/queue" className="flex items-center gap-2 w-full">
                 <ShieldCheck className="w-4 h-4" />
@@ -133,6 +171,20 @@ export function UserProfile() {
             <Heart className="w-4 h-4 text-muted-foreground" />
             <span>Favorites</span>
           </DropdownMenuItem>
+
+          {user?.role === "user" && !user?.roleRequest && (
+            <DropdownMenuItem 
+              className="cursor-pointer gap-2 rounded-lg py-2 mt-1 bg-secondary/50 hover:bg-secondary border border-border/50"
+              onClick={handleRoleRequest}
+              disabled={loadingRequest}
+            >
+              <ShieldCheck className="w-4 h-4 text-primary" />
+              <div className="flex flex-col">
+                <span className="font-bold text-[11px]">Apply for Admin</span>
+                <span className="text-[9px] text-muted-foreground">Request access to moderation tools</span>
+              </div>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
         
         <DropdownMenuSeparator className="bg-border/50" />

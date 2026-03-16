@@ -13,25 +13,31 @@ export async function getEventsInViewport(
   minLng: number,
   minLat: number,
   maxLng: number,
-  maxLat: number
+  maxLat: number,
+  hours?: number
 ) {
-  // Using PostGIS ST_Within and ST_MakeEnvelope
-  // envelope: min_lng, min_lat, max_lng, max_lat, srid
+  const whereClause = [
+    sql`ST_Within(
+      ${publishedEvents.coordinates}, 
+      ST_MakeEnvelope(${minLng}, ${minLat}, ${maxLng}, ${maxLat}, 4326)
+    )`
+  ];
+
+  if (hours) {
+    whereClause.push(sql`${publishedEvents.createdAt} >= NOW() - INTERVAL '${sql.raw(hours.toString())} hours'`);
+  }
+
   return await db.select({
     id: publishedEvents.id,
     title: publishedEvents.title,
     description: publishedEvents.description,
     severity: publishedEvents.severity,
     imageUrl: publishedEvents.imageUrl,
+    sourceUrl: publishedEvents.sourceUrl, // Added this
     createdAt: publishedEvents.createdAt,
     lng: sql<number>`ST_X(${publishedEvents.coordinates})`,
     lat: sql<number>`ST_Y(${publishedEvents.coordinates})`,
-  }).from(publishedEvents).where(
-    sql`ST_Within(
-      ${publishedEvents.coordinates}, 
-      ST_MakeEnvelope(${minLng}, ${minLat}, ${maxLng}, ${maxLat}, 4326)
-    )`
-  );
+  }).from(publishedEvents).where(sql.join(whereClause, sql` AND `));
 }
 
 /**

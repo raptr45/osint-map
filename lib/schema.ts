@@ -13,10 +13,10 @@ export const publishedEvents = pgTable("published_events", {
   title: text("title").notNull(),
   description: text("description"),
   sourceUrl: text("source_url"),
-  severity: text("severity").$type<"low" | "medium" | "high" | "critical">().default("low"),
+  severity: text("severity").$type<"low" | "medium" | "high" | "critical">().default("low").notNull(),
   imageUrl: text("image_url"),
   coordinates: geometry("coordinates").notNull(),
-  userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+  userId: text("user_id").references(() => user.id).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
