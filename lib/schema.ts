@@ -16,7 +16,7 @@ export const publishedEvents = pgTable("published_events", {
   severity: text("severity").$type<"low" | "medium" | "high" | "critical">().default("low").notNull(),
   imageUrl: text("image_url"),
   coordinates: geometry("coordinates").notNull(),
-  userId: text("user_id").references(() => user.id).notNull(),
+  userId: text("user_id").references(() => user.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

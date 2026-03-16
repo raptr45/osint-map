@@ -24,9 +24,9 @@ A high-performance, real-time geopolitical mapping tool built with **Next.js**, 
 - [x] Initial infrastructure and Auth setup
 - [x] PostGIS schema and spatial logic
 - [x] Map interface integration
-- [ ] Automated data ingestion pipeline (Telegram/RSS/Social)
-- [ ] Internal moderation dashboard
-- [ ] Live viewport-based event fetching
+- [x] Automated data ingestion pipeline (Telegram/RSS/Social)
+- [x] Internal moderation dashboard
+- [x] Live viewport-based event fetching
 
 ## 🛠️ Getting Started
 

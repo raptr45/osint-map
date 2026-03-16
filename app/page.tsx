@@ -71,7 +71,7 @@ export default async function Home() {
       </header>
 
       <main className="flex-1 relative p-4">
-        <MapView />
+        <MapView isAdmin={admin} />
       </main>
     </div>
   );
