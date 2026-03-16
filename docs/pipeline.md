@@ -32,8 +32,19 @@ Before an event is "Published" to the global map, it must pass a human check:
 3. **Publication**: Once approved, the record is moved from `pending_events` to `published_events` and PostGIS geometry is generated.
 
 ## 🚀 4. How to Test
+
+### Mock Ingestion (Manual)
 You can simulate the ingestion of any text using the mock-ingestor CLI:
 ```bash
 pnpm tsx ingest/mock-ingestor.ts "Your raw intel text here"
 ```
-Check the **Moderation Queue** (`/admin/queue`) to see the result.
+
+### Telegram Ingestion (Real-time)
+To start the live Telegram MTProto listener:
+1. Ensure `TELEGRAM_API_ID` and `TELEGRAM_API_HASH` are in your `.env`.
+2. Run:
+```bash
+pnpm tsx ingest/telegram-ingestor.ts
+```
+3. Follow the CLI prompts to log in.
+4. Copy the **Session String** printed in the terminal and save it to `TELEGRAM_SESSION` in your `.env` so you don't have to log in every time.
