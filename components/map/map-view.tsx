@@ -6,7 +6,7 @@ import { useTheme } from "next-themes";
 import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { cn } from "@/lib/utils";
-import { ExternalLink, Globe, ChevronRight, Activity, Zap } from "lucide-react";
+import { ExternalLink, Globe, ChevronRight, Activity, Zap, Trash2, Edit3, X, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const SCROLLBAR_STYLES = `
@@ -41,7 +41,11 @@ interface MapEvent {
   createdAt: string;
 }
 
-export function MapView() {
+interface MapViewProps {
+  isAdmin: boolean;
+}
+
+export function MapView({ isAdmin }: MapViewProps) {
   const { theme } = useTheme();
   const searchParams = useSearchParams();
   const mapRef = React.useRef<MapRef>(null);
@@ -59,9 +63,9 @@ export function MapView() {
     }
   }, [region]);
 
-  const { data: events, isLoading } = useSWR(
+  const { data: events, isLoading, mutate } = useSWR(
     bbox 
-      ? `/api/events?minLng=${bbox[0]}&minLat=${bbox[1]}&maxLng=${bbox[2]}&maxLat=${bbox[3]}${hours ? `&hours=${hours}` : ""}` 
+      ? `/api/events?minLng=${bbox[0]}&minLat=${bbox[1]}&maxLng=${bbox[2]}&maxLat=${bbox[3]}&hours=${hours || "24"}${region ? `&region=${region}` : ""}` 
       : null,
     fetcher,
     { refreshInterval: 10000 }
@@ -260,38 +264,212 @@ export function MapView() {
               longitude={selectedEvent.lng}
               latitude={selectedEvent.lat}
               anchor="top"
-              onClose={() => setSelectedEvent(null)}
+              onClose={() => {
+                setSelectedEvent(null);
+              }}
               className="z-50"
               closeButton={false}
               offset={10}
             >
-              <div className="p-4 max-w-[240px] bg-card/90 backdrop-blur-xl text-card-foreground border-none shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-2xl overflow-hidden font-sans">
-                <div className="flex items-center justify-between mb-3 border-b border-border/30 pb-2">
-                  <div className={cn(
-                    "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider font-display",
-                    selectedEvent.severity === "critical" ? "bg-red-500/10 text-red-500 border border-red-500/20" :
-                    selectedEvent.severity === "high" ? "bg-orange-500/10 text-orange-500 border border-orange-500/20" :
-                    "bg-secondary text-secondary-foreground"
-                  )}>
-                    {selectedEvent.severity}
-                  </div>
-                  <span className="text-[9px] font-bold text-muted-foreground tabular-nums opacity-60">{formatTime(selectedEvent.createdAt)}</span>
-                </div>
-                <h4 className="font-bold text-sm mb-2 leading-tight tracking-tight font-display">{selectedEvent.title}</h4>
-                <p className="text-[11px] text-muted-foreground/90 line-clamp-4 mb-4 leading-relaxed">{selectedEvent.description}</p>
-                
-                {selectedEvent.sourceUrl && (
-                  <Button asChild size="sm" variant="default" className="w-full h-9 text-[11px] font-bold gap-2 bg-primary shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all font-display">
-                    <a href={selectedEvent.sourceUrl} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      READ INTEL SOURCE
-                    </a>
-                  </Button>
-                )}
-              </div>
+              <PopupContent 
+                event={selectedEvent} 
+                isAdmin={isAdmin} 
+                onDelete={async (id: string) => {
+                  await fetch(`/api/admin/events/${id}`, { method: "DELETE" });
+                  mutate();
+                  setSelectedEvent(null);
+                }}
+                onUpdate={async (id: string, data: Partial<MapEvent>) => {
+                  await fetch(`/api/admin/events/${id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
+                  });
+                  mutate();
+                  if (selectedEvent) setSelectedEvent({ ...selectedEvent, ...data } as MapEvent);
+                }}
+              />
             </Popup>
           )}
         </Map>
+      </div>
+    </div>
+  );
+}
+
+function PopupContent({ 
+  event, 
+  isAdmin, 
+  onDelete, 
+  onUpdate 
+}: { 
+  event: MapEvent; 
+  isAdmin: boolean; 
+  onDelete: (id: string) => Promise<void>;
+  onUpdate: (id: string, data: Partial<MapEvent>) => Promise<void>;
+}) {
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  const [title, setTitle] = React.useState(event.title);
+  const [desc, setDesc] = React.useState(event.description);
+  const [severity, setSeverity] = React.useState(event.severity);
+
+  const formatTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  if (isEditing) {
+    return (
+      <div className="p-4 w-[280px] bg-card/95 backdrop-blur-2xl text-card-foreground border border-border/40 shadow-2xl rounded-2xl font-sans space-y-4 animate-in fade-in zoom-in-95 duration-200">
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest pl-1">Title</label>
+          <input 
+            className="w-full bg-secondary/30 border border-border/40 rounded-lg px-3 py-2 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest pl-1">Description</label>
+          <textarea 
+            className="w-full bg-secondary/30 border border-border/40 rounded-lg px-3 py-2 text-xs min-h-[80px] resize-none focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all leading-relaxed"
+            value={desc}
+            onChange={e => setDesc(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest pl-1">Severity</label>
+          <div className="flex gap-1.5">
+            {(["low", "medium", "high", "critical"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSeverity(s)}
+                className={cn(
+                  "flex-1 py-1 rounded-md text-[9px] font-bold uppercase transition-all border",
+                  severity === s 
+                    ? "bg-primary text-primary-foreground border-primary" 
+                    : "bg-secondary/30 text-muted-foreground border-border/40 hover:bg-secondary/50"
+                )}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+           <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-9 rounded-lg gap-2 text-[10px] font-bold uppercase"
+            onClick={() => setIsEditing(false)}
+            disabled={isSaving}
+           >
+             <X className="w-3 h-3" /> Cancel
+           </Button>
+           <Button 
+            variant="default" 
+            size="sm" 
+            className="h-9 rounded-lg gap-2 text-[10px] font-bold uppercase shadow-lg shadow-primary/10"
+            disabled={isSaving}
+            onClick={async () => {
+              setIsSaving(true);
+              try {
+                await onUpdate(event.id, { title, description: desc, severity });
+                setIsEditing(false);
+              } finally {
+                setIsSaving(false);
+              }
+            }}
+           >
+             {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+             Save
+           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 max-w-[240px] bg-card/90 backdrop-blur-xl text-card-foreground border-none shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-2xl overflow-hidden font-sans">
+      <div className="flex items-center justify-between mb-3 border-b border-border/30 pb-2">
+        <div className={cn(
+          "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider font-display",
+          event.severity === "critical" ? "bg-red-500/10 text-red-500 border border-red-500/20" :
+          event.severity === "high" ? "bg-orange-500/10 text-orange-500 border border-orange-500/20" :
+          "bg-secondary text-secondary-foreground"
+        )}>
+          {event.severity}
+        </div>
+        <span className="text-[9px] font-bold text-muted-foreground tabular-nums opacity-60">{formatTime(event.createdAt)}</span>
+      </div>
+      <h4 className="font-bold text-sm mb-2 leading-tight tracking-tight font-display">{event.title}</h4>
+      <p className="text-[11px] text-muted-foreground/90 line-clamp-4 mb-4 leading-relaxed">{event.description}</p>
+      
+      <div className="space-y-2">
+        {event.sourceUrl && (
+          <Button asChild size="sm" variant="default" className="w-full h-9 text-[11px] font-bold gap-2 bg-primary shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all font-display">
+            <a href={event.sourceUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="w-3.5 h-3.5" />
+              READ INTEL SOURCE
+            </a>
+          </Button>
+        )}
+        
+        {isAdmin && (
+          <div className="pt-2 mt-2 border-t border-border/30">
+            {showDeleteConfirm ? (
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                <p className="text-[10px] font-bold text-destructive uppercase text-center tracking-widest">Confirm Deletion?</p>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 h-8 rounded-lg text-[9px] font-bold uppercase"
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={isDeleting}
+                  >
+                   Cancel
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    className="flex-1 h-8 rounded-lg text-[9px] font-bold uppercase shadow-lg shadow-destructive/20"
+                    disabled={isDeleting}
+                    onClick={async () => {
+                      setIsDeleting(true);
+                      await onDelete(event.id);
+                      setIsDeleting(false);
+                    }}
+                  >
+                    {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                    Confirm
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1 h-8 rounded-lg gap-2 text-[9px] font-bold uppercase hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all font-display"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  <Trash2 className="w-3 h-3" /> Delete
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1 h-8 rounded-lg gap-2 text-[9px] font-bold uppercase hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all font-display"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Edit3 className="w-3 h-3" /> Edit
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

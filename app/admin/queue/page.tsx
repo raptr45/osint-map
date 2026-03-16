@@ -26,7 +26,12 @@ interface PendingEvent {
 export default function ModerationQueue() {
   const { theme } = useTheme();
   const { data: queue, mutate, isLoading } = useSWR<PendingEvent[]>("/api/admin/queue", fetcher);
-  const [selected, setSelected] = React.useState<PendingEvent | null>(null);
+  const [selectedId, setSelectedId] = React.useState<string | null>(null);
+
+  const selected = React.useMemo(() => {
+    return queue?.find(i => i.id === selectedId) || null;
+  }, [queue, selectedId]);
+
   const [isPublishing, setIsPublishing] = React.useState(false);
   const mapRef = React.useRef<MapRef>(null);
 
@@ -35,15 +40,44 @@ export default function ModerationQueue() {
   const [editDesc, setEditDesc] = React.useState("");
   const [editPos, setEditPos] = React.useState<{ lng: number; lat: number } | null>(null);
 
+  const lastSelectedId = React.useRef<string | null>(null);
+
   React.useEffect(() => {
     if (selected) {
-      setEditTitle(selected.suggestedTitle || "");
-      setEditDesc(selected.suggestedDescription || "");
-      if (selected.lng && selected.lat) {
-        setEditPos({ lng: selected.lng, lat: selected.lat });
+      // If we just changed IDs, or if we have no content but suggestions just arrived
+      const isNewSelection = lastSelectedId.current !== selected.id;
+      
+      if (isNewSelection || (!editTitle && selected.suggestedTitle)) {
+        setEditTitle(selected.suggestedTitle || "");
       }
+      if (isNewSelection || (!editDesc && selected.suggestedDescription)) {
+        setEditDesc(selected.suggestedDescription || "");
+      }
+      
+      if (selected.lng && selected.lat) {
+        const newPos = { lng: selected.lng, lat: selected.lat };
+        
+        // Only update position and fly if it's a new selection or if we had no position
+        if (isNewSelection || !editPos) {
+          setEditPos(newPos);
+          mapRef.current?.flyTo({
+            center: [newPos.lng, newPos.lat],
+            zoom: 12,
+            duration: 2000
+          });
+        }
+      } else if (isNewSelection) {
+        setEditPos(null);
+      }
+      
+      lastSelectedId.current = selected.id;
+    } else {
+      lastSelectedId.current = null;
+      setEditTitle("");
+      setEditDesc("");
+      setEditPos(null);
     }
-  }, [selected]);
+  }, [selected, editTitle, editDesc, editPos]);
 
   const handlePublish = async () => {
     if (!selected || !editPos) return;
@@ -63,7 +97,7 @@ export default function ModerationQueue() {
       });
       if (res.ok) {
         mutate();
-        setSelected(null);
+        setSelectedId(null);
       }
     } finally {
       setIsPublishing(false);
@@ -79,7 +113,7 @@ export default function ModerationQueue() {
       });
       if (res.ok) {
         mutate();
-        setSelected(null);
+        setSelectedId(null);
       }
     } finally {
       setIsPublishing(false);
@@ -167,7 +201,7 @@ export default function ModerationQueue() {
                         ? "bg-primary/5 border-primary/40 shadow-lg shadow-primary/5" 
                         : "bg-background/40 hover:bg-secondary/50 hover:border-border"
                     )}
-                    onClick={() => setSelected(item)}
+                    onClick={() => setSelectedId(item.id)}
                   >
                     {selected?.id === item.id && (
                       <div className="absolute left-0 top-0 h-full w-1 bg-primary" />
@@ -311,6 +345,19 @@ export default function ModerationQueue() {
                        <Card className="bg-background/80 backdrop-blur-xl border-border/40 p-2 text-center text-[9px] font-bold tracking-widest uppercase shadow-2xl">
                           Select Point of Interest on Map
                        </Card>
+                       {selected?.lng && (
+                         <Button 
+                           variant="outline" 
+                           size="sm" 
+                           onClick={() => {
+                             mapRef.current?.flyTo({ center: [selected.lng!, selected.lat!], zoom: 12 });
+                             setEditPos({ lng: selected.lng!, lat: selected.lat! });
+                           }}
+                           className="bg-background/80 backdrop-blur-xl border-border/40 h-8 text-[9px] font-bold uppercase tracking-widest gap-2"
+                         >
+                           <MapPin className="w-3 h-3 text-primary" /> Use AI Suggested Location
+                         </Button>
+                       )}
                     </div>
                 </div>
               </div>

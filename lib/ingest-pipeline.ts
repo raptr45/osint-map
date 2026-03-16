@@ -43,7 +43,9 @@ export async function processIngestion(rawText: string) {
         .set({
           suggestedTitle: parsed.title,
           suggestedDescription: parsed.description,
-          suggestedCoordinates: pointSql(parsed.longitude, parsed.latitude),
+          suggestedCoordinates: (parsed.longitude !== null && parsed.latitude !== null) 
+            ? pointSql(parsed.longitude!, parsed.latitude!) 
+            : null,
         })
         .where(eq(pendingEvents.id, pending.id));
         
