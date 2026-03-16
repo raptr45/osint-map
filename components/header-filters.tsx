@@ -47,14 +47,14 @@ export function HeaderFilters() {
   const activeRegionLabel = REGION_OPTIONS.find(o => o.value === currentRegion)?.label || "Global Region";
 
   return (
-    <div className="hidden lg:flex items-center gap-1 bg-secondary/30 p-1 rounded-full border border-border/50">
+    <div className="hidden lg:flex items-center gap-1.5 bg-secondary/20 p-1 rounded-full border border-border/40">
       {/* Region Filter */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="rounded-full gap-2 px-4 h-8 text-[11px] font-bold hover:bg-background/50 outline-none font-display">
-            <Globe className="w-3.5 h-3.5 text-primary" />
-            {activeRegionLabel}
-            <ChevronDown className="w-3 h-3 text-muted-foreground" />
+          <Button variant="ghost" size="sm" className="rounded-full gap-2 px-5 h-9 text-[10px] font-bold uppercase tracking-widest hover:bg-background/60 outline-none font-display transition-all border border-transparent hover:border-border/40">
+            <Globe className="w-3 h-3 text-primary" />
+            <span className="opacity-80">{activeRegionLabel}</span>
+            <ChevronDown className="w-2.5 h-2.5 text-muted-foreground opacity-40 group-hover:opacity-100" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-48 p-1 backdrop-blur-xl bg-card/80 border-border/50 rounded-xl font-sans">
@@ -74,15 +74,14 @@ export function HeaderFilters() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <div className="w-px h-4 bg-border/50 mx-1" />
 
       {/* Time Filter */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="rounded-full gap-2 px-4 h-8 text-[11px] font-bold hover:bg-background/50 outline-none font-display">
-            <Clock className="w-3.5 h-3.5 text-primary" />
-            {activeTimeLabel}
-            <ChevronDown className="w-3 h-3 text-muted-foreground" />
+          <Button variant="ghost" size="sm" className="rounded-full gap-2 px-5 h-9 text-[10px] font-bold uppercase tracking-widest hover:bg-background/60 outline-none font-display transition-all border border-transparent hover:border-border/40">
+            <Clock className="w-3 h-3 text-primary" />
+            <span className="opacity-80">{activeTimeLabel}</span>
+            <ChevronDown className="w-2.5 h-2.5 text-muted-foreground opacity-40 group-hover:opacity-100" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-40 p-1 backdrop-blur-xl bg-card/80 border-border/50 rounded-xl font-sans">

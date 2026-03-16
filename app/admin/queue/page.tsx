@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, X, MapPin, Globe, Loader2, RefreshCcw, Clock } from "lucide-react";
+import { X, MapPin, Loader2, RefreshCcw, Activity, ShieldCheck, ChevronRight } from "lucide-react";
 import Map, { Marker, NavigationControl, type MapRef, type MapLayerMouseEvent } from "react-map-gl/maplibre";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
@@ -70,6 +70,22 @@ export default function ModerationQueue() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!selected) return;
+    setIsPublishing(true); // Using same loading state for simplicity
+    try {
+      const res = await fetch(`/api/admin/queue?id=${selected.id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        mutate();
+        setSelected(null);
+      }
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   const handleMapClick = (e: MapLayerMouseEvent) => {
     setEditPos({ lng: e.lngLat.lng, lat: e.lngLat.lat });
   };
@@ -80,9 +96,8 @@ export default function ModerationQueue() {
     const groups: Record<string, PendingEvent[]> = {};
     queue.forEach((item) => {
       const date = new Date(item.createdAt).toLocaleDateString("en-US", {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
+        weekday: 'short',
+        month: 'short',
         day: 'numeric'
       });
       if (!groups[date]) groups[date] = [];
@@ -103,164 +118,217 @@ export default function ModerationQueue() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6 lg:p-10 font-sans">
-      <div className="max-w-7xl mx-auto space-y-8 mt-16">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Intelligence Queue</h1>
-            <p className="text-muted-foreground mt-1">Review AI-parsed data streams and verify locations.</p>
+    <div className="h-screen flex flex-col bg-background font-sans overflow-hidden">
+      <header className="h-16 border-b border-border/50 bg-background/50 backdrop-blur-xl flex items-center justify-between px-8 z-20">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+              <ShieldCheck className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <div className="flex flex-col h-full justify-center">
+                <h1 className="text-sm font-bold tracking-tight uppercase text-foreground font-display leading-none">Intelligence Queue</h1>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] leading-none mt-1 opacity-50">Tactical Verification</span>
+            </div>
           </div>
-          <Button variant="outline" onClick={() => mutate()} className="gap-2">
-            <RefreshCcw className="w-4 h-4" /> Refresh
-          </Button>
-        </div>
+          <div className="flex items-center gap-4">
+             <div className="flex items-center gap-2 bg-secondary/50 px-3 py-1.5 rounded-full border border-border/40">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-bold text-muted-foreground uppercase">{queue?.length || 0} PENDING</span>
+             </div>
+             <Button variant="outline" size="sm" onClick={() => mutate()} className="gap-2 h-9 rounded-full px-4 text-xs font-bold uppercase tracking-wider">
+                <RefreshCcw className="w-3.5 h-3.5" /> Sync
+             </Button>
+          </div>
+      </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* List Section */}
-          <div className="lg:col-span-1 space-y-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+      <div className="flex-1 flex overflow-hidden">
+        {/* List Section */}
+        <div className="w-80 h-full border-r border-border/50 flex flex-col bg-card/20 backdrop-blur-sm">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-6">
             {isLoading && (
-              <div className="flex flex-col items-center justify-center p-10 gap-4 text-muted-foreground">
+              <div className="flex flex-col items-center justify-center py-20 gap-4 text-muted-foreground opacity-50">
                 <Loader2 className="animate-spin w-8 h-8" />
-                <span>Syncing queue...</span>
+                <span className="text-xs font-bold uppercase tracking-widest">Hydrating Queue...</span>
               </div>
             )}
             
             {!isLoading && Object.entries(groupedQueue).map(([date, items]) => (
               <div key={date} className="space-y-3">
-                <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md py-1">
-                  <span className="text-[10px] font-bold tracking-widest uppercase text-primary/60 border-b border-primary/20 pb-1">
-                    {date === new Date().toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) ? "Today" : date}
+                <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md py-1 border-b border-border/20 mb-3">
+                  <span className="text-[10px] font-bold tracking-widest uppercase text-primary/70">
+                    {date}
                   </span>
                 </div>
                 {items.map((item) => (
-                  <Card 
+                  <div 
                     key={item.id} 
                     className={cn(
-                      "p-4 cursor-pointer transition-all border-border/40 hover:border-primary/50",
-                      selected?.id === item.id ? "ring-2 ring-primary border-transparent bg-primary/5" : "bg-card/50 backdrop-blur-sm"
+                      "p-3 rounded-xl cursor-pointer transition-all border border-border/40 group relative overflow-hidden font-sans",
+                      selected?.id === item.id 
+                        ? "bg-primary/5 border-primary/40 shadow-lg shadow-primary/5" 
+                        : "bg-background/40 hover:bg-secondary/50 hover:border-border"
                     )}
                     onClick={() => setSelected(item)}
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-1 overflow-hidden">
-                        <h3 className="font-bold text-sm truncate">{item.suggestedTitle || "Review Needed"}</h3>
-                        <p className="text-xs text-muted-foreground line-clamp-2">{item.rawSource}</p>
+                    {selected?.id === item.id && (
+                      <div className="absolute left-0 top-0 h-full w-1 bg-primary" />
+                    )}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-start justify-between">
+                        <h3 className={cn(
+                          "font-bold text-xs tracking-tight line-clamp-1 flex-1 uppercase font-display",
+                          selected?.id === item.id ? "text-primary" : "text-foreground"
+                        )}>
+                          {item.suggestedTitle || "UNPROCESSED INTEL"}
+                        </h3>
+                        {item.lng && (
+                           <div className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                           </div>
+                        )}
                       </div>
-                      <Badge variant="secondary" className="text-[10px] uppercase">Pending</Badge>
-                    </div>
-                    <div className="flex items-center gap-4 mt-4 text-[10px] text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                          <Globe className="w-3 h-3" />
-                          {item.lng ? "GEO-LOCATED" : "NO COORDS"}
+                      <p className="text-[10px] text-muted-foreground/80 line-clamp-2 leading-relaxed">
+                        {item.rawSource}
+                      </p>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-[9px] font-bold text-muted-foreground/60 tabular-nums">
+                          {formatRelativeTime(item.createdAt)}
+                        </span>
+                        <div className="flex items-center gap-1">
+                             <span className="text-[8px] font-bold text-muted-foreground/40 group-hover:text-primary transition-colors uppercase tracking-widest opacity-0 group-hover:opacity-100">Select</span>
+                             <ChevronRight className="w-3 h-3 text-muted-foreground/40 group-hover:text-primary transition-all" />
+                        </div>
                       </div>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {formatRelativeTime(item.createdAt)}
-                      </span>
                     </div>
-                  </Card>
+                  </div>
                 ))}
               </div>
             ))}
 
             {!isLoading && queue?.length === 0 && (
-              <div className="text-center p-10 text-muted-foreground opacity-50">
-                <p className="text-sm font-medium">Queue is empty</p>
+              <div className="text-center py-20 text-muted-foreground opacity-50">
+                <p className="text-xs font-bold uppercase tracking-widest">Queue Clear</p>
               </div>
             )}
           </div>
+        </div>
 
-          {/* Details & Map Section */}
-          <div className="lg:col-span-2 space-y-6">
-            {selected ? (
-              <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-                <Card className="p-6 bg-card/50 backdrop-blur-xl border-border/40 space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase text-muted-foreground">Refined Title</label>
-                        <input 
-                          className="w-full bg-background/50 border border-border/40 rounded-lg p-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                          value={editTitle}
-                          onChange={(e) => setEditTitle(e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase text-muted-foreground">Verification Summary</label>
-                        <textarea 
-                          className="w-full bg-background/50 border border-border/40 rounded-lg p-2 text-sm h-32 resize-none focus:outline-none focus:ring-1 focus:ring-primary"
-                          value={editDesc}
-                          onChange={(e) => setEditDesc(e.target.value)}
-                        />
-                      </div>
+        {/* Details & Map Section */}
+        <div className="flex-1 h-full bg-background relative flex flex-col">
+          {selected ? (
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden animate-in fade-in slide-in-from-right-8 duration-500">
+              <div className="flex-1 flex flex-col border-r border-border/50">
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-8">
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2 mb-2">
+                       <div className="w-2 h-2 rounded-full bg-primary" />
+                       <h2 className="text-xs font-bold uppercase tracking-widest text-primary font-display">Refinement Engine</h2>
+                    </div>
+                    
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider ml-1">Optimized Intelligence Title</label>
+                      <input 
+                        className="w-full bg-secondary/20 border border-border/40 rounded-xl p-4 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-primary/40 focus:bg-secondary/40 transition-all font-display"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        placeholder="Target designation..."
+                      />
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase text-muted-foreground flex justify-between">
-                        Spatial Verification 
-                        <span className="text-primary font-mono">{editPos?.lat.toFixed(4)}, {editPos?.lng.toFixed(4)}</span>
-                      </label>
-                      <div className="h-[250px] rounded-xl overflow-hidden border border-border/40 relative">
-                        <Map
-                          ref={mapRef}
-                          initialViewState={{
-                            longitude: editPos?.lng || 31.1656,
-                            latitude: editPos?.lat || 48.3794,
-                            zoom: 12,
-                          }}
-                          onClick={handleMapClick}
-                          mapStyle={theme === "dark" ? "https://tiles.openfreemap.org/styles/dark" : "https://tiles.openfreemap.org/styles/bright"}
-                          style={{ width: "100%", height: "100%" }}
-                        >
-                          {editPos && (
-                            <Marker longitude={editPos.lng} latitude={editPos.lat} anchor="bottom">
-                              <MapPin className="text-primary fill-primary/20 w-8 h-8 -mt-8" />
-                            </Marker>
-                          )}
-                          <NavigationControl position="top-right" />
-                        </Map>
-                        <div className="absolute bottom-2 left-2 bg-background/80 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold border border-border/40">
-                           CLICK MAP TO RE-LOCATE PIN
-                        </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider ml-1">Situational Report (Summary)</label>
+                      <textarea 
+                        className="w-full bg-secondary/20 border border-border/40 rounded-xl p-4 text-sm h-48 resize-none focus:outline-none focus:ring-1 focus:ring-primary/40 focus:bg-secondary/40 transition-all leading-relaxed font-sans"
+                        value={editDesc}
+                        onChange={(e) => setEditDesc(e.target.value)}
+                        placeholder="Intelligence summary..."
+                      />
+                    </div>
+
+                    <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 space-y-3 shadow-xl shadow-primary/5">
+                      <div className="flex justify-between items-center pb-2 border-b border-primary/10">
+                        <label className="text-[10px] font-bold uppercase text-primary/80 tracking-widest">Raw Source Intelligence</label>
+                        <Badge variant="outline" className="text-[9px] font-bold border-primary/20 text-primary">SECURED</Badge>
                       </div>
+                      <p className="text-[11px] leading-relaxed text-muted-foreground font-mono italic">&ldquo;{selected.rawSource}&rdquo;</p>
                     </div>
                   </div>
+                </div>
 
-                  <div className="bg-secondary/20 p-4 rounded-xl space-y-2">
-                    <div className="flex justify-between items-center">
-                      <label className="text-[10px] font-bold uppercase text-muted-foreground">Original Raw Intel</label>
-                      <span className="text-[10px] text-muted-foreground">{new Date(selected.createdAt).toLocaleString()}</span>
-                    </div>
-                    <p className="text-xs leading-relaxed italic text-muted-foreground/80">{selected.rawSource}</p>
+                <div className="h-24 border-t border-border/50 bg-card/10 backdrop-blur-xl p-6 flex flex-row-reverse items-center justify-between gap-4">
+                  <Button 
+                    className="h-12 px-8 rounded-xl text-xs font-bold uppercase tracking-widest gap-3 shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                    onClick={handlePublish}
+                    disabled={isPublishing}
+                  >
+                    {isPublishing ? <Loader2 className="animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                    Deploy to Public Map
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="h-12 w-12 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive border border-transparent hover:border-destructive/20 transition-all font-sans"
+                    onClick={handleDelete}
+                    disabled={isPublishing}
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                  <div className="flex-1 flex flex-col items-start gap-1">
+                     <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Intel Origin ID</span>
+                     <span className="text-[10px] font-mono text-muted-foreground">{selected.id}</span>
                   </div>
+                </div>
+              </div>
 
-                  <div className="flex gap-4 pt-4 border-t border-border/20">
-                    <Button 
-                      className="flex-1 gap-2 h-12 rounded-xl text-lg font-bold"
-                      onClick={handlePublish}
-                      disabled={isPublishing}
+              <div className="w-[400px] h-full bg-card/20 flex flex-col">
+                <div className="p-6 border-b border-border/50 bg-background/50">
+                    <h3 className="text-xs font-bold uppercase tracking-widest mb-1 font-display">Geospatial Validation</h3>
+                    <div className="flex items-center justify-between">
+                       <span className="text-[10px] font-mono text-primary font-bold">PRECISION: HIGH</span>
+                       <span className="text-[10px] font-mono text-muted-foreground tracking-tighter">
+                          {editPos?.lat.toFixed(6)}N / {editPos?.lng.toFixed(6)}E
+                       </span>
+                    </div>
+                </div>
+                <div className="flex-1 relative border-l border-border/10">
+                    <Map
+                      ref={mapRef}
+                      initialViewState={{
+                        longitude: editPos?.lng || 31.1656,
+                        latitude: editPos?.lat || 48.3794,
+                        zoom: 12,
+                      }}
+                      onClick={handleMapClick}
+                      mapStyle={theme === "dark" ? "https://tiles.openfreemap.org/styles/dark" : "https://tiles.openfreemap.org/styles/bright"}
+                      style={{ width: "100%", height: "100%" }}
                     >
-                      {isPublishing ? <Loader2 className="animate-spin" /> : <Check className="w-5 h-5" />}
-                      Approve & Publish Live
-                    </Button>
-                    <Button variant="destructive" className="h-12 w-12 rounded-xl flex items-center justify-center p-0">
-                      <X className="w-6 h-6" />
-                    </Button>
-                  </div>
-                </Card>
-              </div>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-border/40 rounded-3xl p-20 text-center space-y-4 opacity-50">
-                <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 text-muted-foreground" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold">Select an entry</h3>
-                  <p className="text-sm text-muted-foreground">Choose a raw report from the queue to start verification.</p>
+                      {editPos && (
+                        <Marker longitude={editPos.lng} latitude={editPos.lat} anchor="bottom">
+                          <MapPin className="text-primary fill-primary/20 w-8 h-8 -mt-8" />
+                        </Marker>
+                      )}
+                      <NavigationControl position="bottom-right" />
+                    </Map>
+                    <div className="absolute top-4 left-4 right-4 z-10 flex flex-col gap-2">
+                       <Card className="bg-background/80 backdrop-blur-xl border-border/40 p-2 text-center text-[9px] font-bold tracking-widest uppercase shadow-2xl">
+                          Select Point of Interest on Map
+                       </Card>
+                    </div>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-center p-20 animate-in fade-in zoom-in-95 duration-700">
+              <div className="relative mb-8">
+                <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
+                <div className="w-24 h-24 rounded-3xl bg-secondary/50 flex items-center justify-center border border-border/40 relative">
+                  <Activity className="w-10 h-10 text-muted-foreground/40 animate-pulse" />
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold font-display uppercase tracking-tight mb-2">Awaiting Intelligence</h3>
+              <p className="text-sm text-muted-foreground max-w-md antialiased leading-relaxed">
+                Connect to a raw signal stream or select an operational event from the registry list to initiate the geospatial verification protocol.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

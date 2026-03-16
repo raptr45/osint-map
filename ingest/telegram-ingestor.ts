@@ -48,20 +48,21 @@ async function startTelegramIngestor() {
     if (!message.text) return;
 
     // Get sender info (channel)
-    const chat = await message.getChat() as Api.Chat | Api.Channel | Api.User;
-    const username = ("username" in chat ? chat.username : null) || chat.id.toString();
+    const chat = await message.getChat() as Api.Chat | Api.Channel | Api.User | undefined;
+    const username = (chat && "username" in chat ? chat.username : null) || (chat ? chat.id.toString() : "unknown");
 
     console.log(`\n📬 [${username}] New Message Received`);
     
-    // Check if it's from our target list or if you want to ingest everything
-    // For now, let's ingest if it's in our list
-    if (TARGET_CHANNELS.includes(username) || true) { // Set to true to ingest all incoming for testing
+    // Check if it's from our target list
+    if (username && TARGET_CHANNELS.includes(username?.toString())) {
       await processIngestion(message.text);
     }
   }, new NewMessage({}));
 
   console.log(`\n🛰️ Monitoring channels: ${TARGET_CHANNELS.join(", ")}`);
   console.log("Fetching recent history to prime the queue...");
+
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   for (const channelName of TARGET_CHANNELS) {
     try {
@@ -70,6 +71,8 @@ async function startTelegramIngestor() {
       for (const msg of msgs) {
         if (msg.text) {
           await processIngestion(msg.text);
+          // Small delay to avoid hitting Gemini free tier RPM
+          await sleep(2000);
         }
       }
     } catch (err) {
