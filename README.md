@@ -30,7 +30,7 @@ For detailed technical specs and operational guides, see the [Documentation Hub]
 ### 🛡️ Operational Features
 
 - **📍 Precision Mapping**: High-speed geospatial visualization via MapLibre GL.
-- **🤖 AI Extraction**: Automated situational reports and geolocation using Gemini 1.5 Flash.
+- **🤖 AI Extraction**: Automated situational reports and geolocation using Gemini 2.0 Flash.
 - **👮 Moderation Queue**: Full-cycle verification from raw intel to published events.
 - **🔐 Secure Uplink**: Hardened role-based access control via Better-Auth.
 

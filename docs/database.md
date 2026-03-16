@@ -5,22 +5,28 @@ This project leverages PostgreSQL with the **PostGIS** extension for advanced ge
 ```mermaid
 erDiagram
     USER ||--o{ PUBLISHED_EVENTS : "approves"
-    PENDING_EVENTS ||--o{ SYSTEM_LOGS : "generates"
+    PENDING_EVENTS ||--o{ SYSTEM_LOGS : "logs"
     PUBLISHED_EVENTS {
         uuid id PK
         string title
+        text description
         geometry coordinates "PostGIS Point"
         string severity
-        datetime createdAt
+        string source_url
+        string user_id FK
+        datetime created_at
     }
     PENDING_EVENTS {
         uuid id PK
-        string raw_source
-        json ai_suggestion
-        string status "pending|processed"
+        text raw_source
+        string suggested_title
+        text suggested_description
+        geometry suggested_coordinates
+        string status "pending|processed|rejected"
+        datetime created_at
     }
     USER {
-        uuid id PK
+        string id PK
         string email
         string role "admin|user"
     }

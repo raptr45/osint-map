@@ -6,7 +6,7 @@ This document explains the core technical architecture of the OSINT Map project.
 sequenceDiagram
     participant S as Intel Source (Telegram/RSS)
     participant Q as Pending Queue (Postgres)
-    participant AI as Gemini 1.5 Flash
+    participant AI as Gemini 2.0 Flash
     participant M as Admin Moderation
     participant DB as Published Events (PostGIS)
     participant U as User MapView
@@ -39,7 +39,7 @@ Unlike typical map applications that handle coordinates as simple numbers, this 
 The ingestion process is split into two stages:
 
 1. **Staging (Pending Queue)**: Messy, raw data (Telegram, RSS) is saved to the `pending_events` table.
-2. **AI Enrichment**: **Gemini-1.5-Flash** automatically parses the text to suggest a title, description, and exact coordinates.
+2. **AI Enrichment**: **Gemini-2.0-Flash** automatically parses the text to suggest a title, description, and exact coordinates.
 3. **Moderation**: An administrator reviews the AI-suggested location in the **Intelligence Queue** and approves/edits it for publication.
 
 ## 🔐 4. Access Control

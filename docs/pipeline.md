@@ -24,7 +24,7 @@ The system is designed to swallow raw, unstructured text from various sources:
 
 Inputs are hit first in the `Pending Queue`, preserving the original raw text/source.
 
-## 🧠 2. AI Parsing (Gemini-1.5-Flash)
+## 🧠 2. AI Parsing (Gemini-2.0-Flash)
 The `lib/ai-parser.ts` module uses Google's Gemini models to perform "Named Entity Recognition" and "Geolocation".
 
 - **Input**: *"Large explosion reported near the Okhmatdyt Children's Hospital in Kyiv."*
@@ -33,6 +33,7 @@ The `lib/ai-parser.ts` module uses Google's Gemini models to perform "Named Enti
   ```json
   {
     "title": "Hospital Attack - Kyiv",
+    "description": "Missile strike reported near hospital infrastructure. Urgent evacuation in progress.",
     "latitude": 50.4497,
     "longitude": 30.4854,
     "severity": "critical"
