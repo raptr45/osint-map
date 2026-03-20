@@ -1,6 +1,10 @@
 {
   "name": "osint-map",
   "version": "0.1.0",
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=22.22.1"
+  },
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -14,7 +18,9 @@
     "db:generate": "drizzle-kit generate",
     "db:pull": "drizzle-kit pull",
     "db:setup": "pnpm db:postgis && pnpm db:push && pnpm db:seed",
-    "ingest:telegram": "tsx ingest/telegram-ingestor.ts"
+    "ingest:telegram": "tsx ingest/telegram-ingestor.ts",
+    "start:ingest": "tsx ingest/telegram-ingestor.ts",
+    "dev:ingest": "tsx --watch ingest/telegram-ingestor.ts"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.5.5",
