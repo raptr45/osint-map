@@ -167,6 +167,29 @@ async function startTelegramIngestor() {
   console.log(
     "\n✅ Startup complete. Watching for new intelligence reports..."
   );
+
+  // Keep alive heartbeat every 15 minutes
+  setInterval(async () => {
+    const isConnected = client.connected;
+    console.log(
+      `💓 [${new Date().toISOString()}] Ingestor Heartbeat: Still monitoring ${
+        TARGET_CHANNELS.length
+      } channels. (Connected: ${isConnected})`
+    );
+
+    if (!isConnected) {
+      console.warn("⚠️  TELEGRAM DISCONNECTED! Attempting to reconnect...");
+      try {
+        await client.connect();
+        console.log("✅ Reconnected.");
+      } catch (err) {
+        console.error(
+          "❌ Reconnect failed. Crashing to trigger Railway restart."
+        );
+        process.exit(1);
+      }
+    }
+  }, 15 * 60 * 1000);
 }
 
 startTelegramIngestor().catch(console.error);
