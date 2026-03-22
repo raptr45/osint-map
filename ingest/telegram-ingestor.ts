@@ -3,6 +3,7 @@ import fs from "fs";
 import input from "input";
 import path from "path";
 import { Api, TelegramClient } from "telegram";
+import { put } from "@vercel/blob";
 import { NewMessage } from "telegram/events";
 import { NewMessageEvent } from "telegram/events/NewMessage";
 import { StringSession } from "telegram/sessions";
@@ -154,13 +155,16 @@ async function startTelegramIngestor() {
       if (message.media instanceof Api.MessageMediaPhoto) {
         try {
           const photoName = `tg_${username}_${message.id}.jpg`;
-          const localPath = path.join(process.cwd(), "public", "media", photoName);
+          console.log(`📸 Image detected. Uploading to Vercel Blob: ${photoName}`);
           
-          console.log(`📸 Image detected. Downloading to: ${localPath}`);
-          await client.downloadMedia(message.media, { outputFile: localPath });
-          imageUrl = `/media/${photoName}`;
+          const buffer = await client.downloadMedia(message.media, {}) as Buffer;
+          const { url } = await put(`media/${photoName}`, buffer, {
+            access: "public",
+          });
+          imageUrl = url;
+          console.log(`✅ Uploaded: ${url}`);
         } catch (err) {
-          console.error("❌ Failed to download message photo:", err);
+          console.error("❌ Failed to upload message photo:", err);
         }
       } 
       // 2. Fallback to web preview thumbnails
@@ -169,10 +173,14 @@ async function startTelegramIngestor() {
         if (webpage.photo instanceof Api.Photo) {
            try {
              const photoName = `preview_${username}_${message.id}.jpg`;
-             const localPath = path.join(process.cwd(), "public", "media", photoName);
-             await client.downloadMedia(webpage.photo as unknown as Api.TypeMessageMedia, { outputFile: localPath });
-             imageUrl = `/media/${photoName}`;
-           } catch {}
+             const buffer = await client.downloadMedia(webpage.photo as unknown as Api.TypeMessageMedia, {}) as Buffer;
+             const { url } = await put(`media/${photoName}`, buffer, {
+               access: "public",
+             });
+             imageUrl = url;
+           } catch (err) {
+             console.error("❌ Failed to upload preview photo:", err);
+           }
         }
       }
 
@@ -201,12 +209,17 @@ async function startTelegramIngestor() {
           if (msg.media instanceof Api.MessageMediaPhoto) {
             try {
               const photoName = `tg_${channelName}_${msg.id}.jpg`;
-              const localPath = path.join(process.cwd(), "public", "media", photoName);
-              if (!fs.existsSync(localPath)) {
-                await client.downloadMedia(msg.media, { outputFile: localPath });
-              }
-              imageUrl = `/media/${photoName}`;
-            } catch {}
+              console.log(`📸 Priming image: ${photoName}`);
+              
+              const buffer = await client.downloadMedia(msg.media, {}) as Buffer;
+              const { url } = await put(`media/${photoName}`, buffer, {
+                access: "public",
+                addRandomSuffix: false, // Keep id-based stable naming
+              });
+              imageUrl = url;
+            } catch (err) {
+              console.error(`❌ Failed to prime image for ${channelName}_${msg.id}:`, err);
+            }
           }
 
           console.log(
