@@ -125,7 +125,7 @@ export default function SystemLogsPage() {
               <stat.icon className="w-5 h-5" />
             </div>
             <div className="flex-1">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em]">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-[0.1em]">
                 {stat.label}
               </p>
               <p className="text-xl font-bold font-display">{stat.value}</p>
@@ -147,7 +147,7 @@ export default function SystemLogsPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-11 px-4 gap-2 text-[10px] font-bold uppercase tracking-widest hover:bg-secondary"
+              className="h-11 px-4 gap-2 text-xs font-bold uppercase tracking-widest hover:bg-secondary"
             >
               <Filter className="w-3.5 h-3.5" /> Filter Modules
             </Button>
@@ -157,7 +157,7 @@ export default function SystemLogsPage() {
         <div className="flex-1 overflow-x-auto min-h-[400px]">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-border/20 text-[10px] font-bold text-muted-foreground uppercase bg-secondary/10">
+              <tr className="border-b border-border/20 text-xs font-bold text-muted-foreground uppercase bg-secondary/10">
                 <th className="px-6 py-4 tracking-widest">Severity</th>
                 <th className="px-6 py-4 tracking-widest">ID</th>
                 <th className="px-6 py-4 tracking-widest">Module</th>
@@ -183,7 +183,7 @@ export default function SystemLogsPage() {
                       />
                       <span
                         className={cn(
-                          "text-[9px] font-bold uppercase tracking-tighter",
+                          "text-xs font-bold uppercase tracking-tighter",
                           `text-${getLevelColor(log.level)}-500/80`
                         )}
                       >
@@ -191,13 +191,13 @@ export default function SystemLogsPage() {
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-[10px] font-mono text-muted-foreground opacity-60">
+                  <td className="px-6 py-4 text-xs font-mono text-muted-foreground opacity-60">
                     #{log.id.substring(0, 8)}
                   </td>
                   <td className="px-6 py-4">
                     <Badge
                       variant="secondary"
-                      className="text-[9px] font-bold tracking-wider opacity-80 rounded-md py-0"
+                      className="text-xs font-bold tracking-wider opacity-80 rounded-md py-0"
                     >
                       {log.module}
                     </Badge>
@@ -206,7 +206,7 @@ export default function SystemLogsPage() {
                     {log.message}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <span className="text-[10px] font-bold text-muted-foreground tabular-nums opacity-60 flex items-center justify-end gap-1.5">
+                    <span className="text-xs font-bold text-muted-foreground tabular-nums opacity-60 flex items-center justify-end gap-1.5">
                       <Clock className="w-3 h-3" /> {formatDistanceToNow(new Date(log.createdAt))} ago
                     </span>
                   </td>
@@ -222,12 +222,12 @@ export default function SystemLogsPage() {
         </div>
 
         <div className="p-4 bg-secondary/10 border-t border-border/20 flex items-center justify-between">
-          <span className="text-[9px] font-bold text-muted-foreground opacity-50 uppercase tracking-[0.2em]">
+          <span className="text-xs font-bold text-muted-foreground opacity-50 uppercase tracking-[0.2em]">
             Live Stream Enabled
           </span>
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">
+            <span className="text-xs font-bold text-emerald-500 uppercase tracking-widest">
               Active
             </span>
           </div>

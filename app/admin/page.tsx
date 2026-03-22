@@ -79,13 +79,13 @@ export default function AdminOverview() {
               <div className={cn("p-2 rounded-lg bg-background/50 border border-border/40", stat.color)}>
                 <stat.icon className="w-5 h-5" />
               </div>
-              <span className="text-[10px] font-bold text-emerald-500 flex items-center gap-1">
+              <span className="text-xs font-bold text-emerald-500 flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />
                 {stat.trend}
               </span>
             </div>
             <div className="space-y-1">
-              <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">{stat.label}</h3>
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">{stat.label}</h3>
               <p className="text-2xl font-bold tracking-tight font-display">{stat.value}</p>
             </div>
           </Card>
@@ -99,7 +99,7 @@ export default function AdminOverview() {
               <h3 className="text-lg font-bold font-display uppercase tracking-tight">Intelligence Ingestion</h3>
               <p className="text-xs text-muted-foreground">Messages processed per hour across all channels.</p>
             </div>
-            <Button asChild variant="outline" size="sm" className="h-8 text-[11px] font-bold uppercase tracking-wider gap-2">
+            <Button asChild variant="outline" size="sm" className="h-8 text-xs font-bold uppercase tracking-wider gap-2">
                <Link href="/admin/logs">
                 Full Report <ExternalLink className="w-3 h-3" />
                </Link>
@@ -114,7 +114,7 @@ export default function AdminOverview() {
                       className="w-full bg-primary/20 hover:bg-primary/40 rounded-t transition-all" 
                       style={{ height: `${h}%` }}
                     />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm rounded text-[9px] font-bold text-primary -top-8 h-8 border border-border/20 shadow-xl">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm rounded text-xs font-bold text-primary -top-8 h-8 border border-border/20 shadow-xl">
                       {Math.floor(h * 1.5)} pts
                     </div>
                   </div>
@@ -124,7 +124,7 @@ export default function AdminOverview() {
           </div>
           <div className="flex justify-between mt-4 px-1">
             {["08:00", "12:00", "16:00", "20:00", "00:00", "04:00"].map(t => (
-              <span key={t} className="text-[9px] font-bold text-muted-foreground uppercase">{t}</span>
+              <span key={t} className="text-xs font-bold text-muted-foreground uppercase">{t}</span>
             ))}
           </div>
         </Card>
@@ -139,8 +139,8 @@ export default function AdminOverview() {
                   </div>
                   <div className="flex-1 pb-4">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">{act.type}</span>
-                      <span className="text-[9px] font-bold text-muted-foreground flex items-center gap-1">
+                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{act.type}</span>
+                      <span className="text-xs font-bold text-muted-foreground flex items-center gap-1">
                         <Clock className="w-2.5 h-2.5" /> {formatDistanceToNow(new Date(act.time))} ago
                       </span>
                     </div>
@@ -149,7 +149,7 @@ export default function AdminOverview() {
                 </div>
               ))}
            </div>
-           <Button asChild variant="ghost" className="w-full mt-4 text-[11px] font-bold uppercase tracking-widest h-10 hover:bg-secondary">
+           <Button asChild variant="ghost" className="w-full mt-4 text-xs font-bold uppercase tracking-widest h-10 hover:bg-secondary">
              <Link href="/admin/logs">
                 View Audit Log
              </Link>

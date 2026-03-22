@@ -81,17 +81,17 @@ export default function SourcesPage() {
                   </div>
                   <div className="flex flex-col">
                     <span className="font-bold text-lg font-display uppercase tracking-tight">{source.value}</span>
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">{source.type}</span>
+                    <span className="text-xs text-muted-foreground uppercase tracking-widest font-bold">{source.type}</span>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-6">
                   {source.isActive ? (
-                    <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-widest text-emerald-500 bg-emerald-500/10 border-emerald-500/20 px-3">
+                    <Badge variant="outline" className="text-xs uppercase font-bold tracking-widest text-emerald-500 bg-emerald-500/10 border-emerald-500/20 px-3">
                       Active
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">
+                    <Badge variant="outline" className="text-xs uppercase font-bold tracking-widest text-muted-foreground">
                       Offline
                     </Badge>
                   )}
@@ -117,7 +117,7 @@ export default function SourcesPage() {
             </h3>
             <form onSubmit={handleAdd} className="space-y-4">
               <div className="space-y-2">
-                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Platform</label>
+                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Platform</label>
                  <select 
                    value={newType} 
                    onChange={(e) => setNewType(e.target.value)}
@@ -128,7 +128,7 @@ export default function SourcesPage() {
                  </select>
               </div>
               <div className="space-y-2">
-                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Target ID (Username)</label>
+                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Target ID (Username)</label>
                  <input 
                    type="text"
                    value={newValue}

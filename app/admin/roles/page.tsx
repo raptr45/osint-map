@@ -63,7 +63,7 @@ export default function RoleRequestsPage() {
           requests.map((req) => (
             <Card key={req.id} className="p-6 bg-card/30 backdrop-blur-xl border-border/40 hover:bg-card/40 transition-all group overflow-hidden relative">
               <div className="absolute right-0 top-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                 <div className="text-[8px] font-bold text-muted-foreground uppercase bg-secondary/80 px-2 py-1 rounded border border-border/40">ID: {req.id}</div>
+                 <div className="text-xs font-bold text-muted-foreground uppercase bg-secondary/80 px-2 py-1 rounded border border-border/40">ID: {req.id}</div>
               </div>
 
               <div className="flex items-center justify-between">
@@ -91,12 +91,12 @@ export default function RoleRequestsPage() {
                     <div className="flex items-center gap-2">
                         <h4 className="font-bold text-lg tracking-tight font-display uppercase leading-none">{req.name}</h4>
                         {req.roleRequest === "pending" && (
-                            <Badge className="bg-amber-500 text-white border-none text-[9px] font-bold px-2 py-0 h-4 rounded-full">PRIORITY</Badge>
+                            <Badge className="bg-amber-500 text-white border-none text-xs font-bold px-2 py-0 h-4 rounded-full">PRIORITY</Badge>
                         )}
                     </div>
                     <p className="text-xs text-muted-foreground font-medium opacity-70">REIGSTRY EMAIL: {req.email}</p>
                     <div className="pt-2">
-                        <Badge variant="outline" className="text-[9px] font-bold border-primary/20 text-primary bg-primary/5 rounded-lg px-2 py-1">
+                        <Badge variant="outline" className="text-xs font-bold border-primary/20 text-primary bg-primary/5 rounded-lg px-2 py-1">
                             <ShieldCheck className="w-3 h-3 mr-1.5 opacity-70" />
                             AWAITING LEVEL 2 CLEARANCE
                         </Badge>
@@ -108,7 +108,7 @@ export default function RoleRequestsPage() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-11 px-5 rounded-xl text-destructive hover:bg-destructive/10 border border-transparent hover:border-destructive/20 text-[11px] font-bold uppercase tracking-widest gap-2"
+                    className="h-11 px-5 rounded-xl text-destructive hover:bg-destructive/10 border border-transparent hover:border-destructive/20 text-xs font-bold uppercase tracking-widest gap-2"
                     onClick={() => handleAction(req.id, "reject")}
                   >
                     <X className="w-4 h-4" />
@@ -117,7 +117,7 @@ export default function RoleRequestsPage() {
                   <Button 
                     variant="default" 
                     size="sm" 
-                    className="h-11 px-6 rounded-xl bg-primary text-primary-foreground shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-[11px] font-bold uppercase tracking-widest gap-2"
+                    className="h-11 px-6 rounded-xl bg-primary text-primary-foreground shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-xs font-bold uppercase tracking-widest gap-2"
                     onClick={() => handleAction(req.id, "approve")}
                   >
                     <Check className="w-4 h-4" />

@@ -1,6 +1,6 @@
-import { auth } from "./auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { auth } from "./auth";
 
 export async function getServerSession() {
   const session = await auth.api.getSession({
@@ -16,14 +16,14 @@ export async function isAdmin() {
 
 export async function protectAdmin() {
   const session = await getServerSession();
-  
+
   if (!session) {
-    redirect("/login");
+    redirect("/auth/sign-in");
   }
-  
+
   if (session.user.role !== "admin") {
     redirect("/");
   }
-  
+
   return session;
 }
