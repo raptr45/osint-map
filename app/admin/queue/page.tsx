@@ -41,6 +41,7 @@ import Map, {
   type MapRef,
 } from "react-map-gl/maplibre";
 import useSWR from "swr";
+import { authClient } from "@/lib/auth-client";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -71,6 +72,11 @@ export default function ModerationQueue() {
     fetcher,
     { revalidateOnFocus: false }
   );
+  const { data: session } = authClient.useSession();
+  const role = (session?.user as Record<string, unknown>)?.role as string || "user";
+  const canModerate = ["owner", "admin", "moderator"].includes(role);
+  const canPurge = ["owner", "admin"].includes(role);
+
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
   const selected = React.useMemo(() => {
@@ -379,14 +385,16 @@ export default function ModerationQueue() {
               </button>
             ))}
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowClearDialog(true)}
-            className="gap-2 h-9 rounded-md px-4 text-xs font-black uppercase tracking-widest text-destructive/80 border-destructive/20 hover:bg-destructive/10 bg-destructive/5 hover:text-destructive transition-all"
-          >
-            <Trash2 className="w-3.5 h-3.5" /> Purge Queue
-          </Button>
+          {canPurge && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowClearDialog(true)}
+              className="gap-2 h-9 rounded-md px-4 text-xs font-black uppercase tracking-widest text-destructive/80 border-destructive/20 hover:bg-destructive/10 bg-destructive/5 hover:text-destructive transition-all"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Purge Queue
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -715,44 +723,52 @@ export default function ModerationQueue() {
                   </div>
                 </div>
 
-                <div className="h-28 border-t border-border/20 bg-background/50 backdrop-blur-2xl p-6 flex flex-row-reverse items-center justify-between gap-4">
-                  <div className="flex gap-3 items-center">
-                    <Button
-                      variant="outline"
-                      className="h-11 px-6 rounded-xl text-xs font-black uppercase tracking-widest gap-2 border-border/40 hover:bg-primary/10 hover:border-primary/40 transition-all text-foreground group"
-                      onClick={handleReprocess}
-                      disabled={isReprocessing || isPublishing}
-                    >
-                      {isReprocessing ? (
-                        <Loader2 className="animate-spin w-4 h-4" />
+                <div className="flex gap-4 p-4 lg:p-6 bg-card/60 backdrop-blur-2xl border-t border-border/20 sticky bottom-0 items-center justify-between shadow-[0_-20px_40px_-20px_rgba(0,0,0,0.5)] z-20 flex-row-reverse">
+                    <div className="flex gap-4">
+                      {canModerate ? (
+                        <>
+                          <Button
+                            variant="outline"
+                            className="h-11 px-6 rounded-xl text-xs font-black uppercase tracking-widest gap-2 border-border/40 hover:bg-primary/10 hover:border-primary/40 transition-all text-foreground group"
+                            onClick={handleReprocess}
+                            disabled={isReprocessing || isPublishing}
+                          >
+                            {isReprocessing ? (
+                              <Loader2 className="animate-spin w-4 h-4" />
+                            ) : (
+                              <Zap className="w-4 h-4 group-hover:fill-primary" />
+                            )}
+                            Rescan
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="h-11 px-6 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 border-border/40 transition-all"
+                            onClick={handleDelete}
+                            title="Permanently Delete Event"
+                            disabled={isPublishing || isReprocessing}
+                          >
+                            <X className="w-4 h-4" />
+                            Delete
+                          </Button>
+                          <Button
+                            className="h-11 px-8 rounded-xl text-sm font-black uppercase tracking-widest gap-3 shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all bg-primary hover:bg-primary/90 text-primary-foreground"
+                            onClick={handlePublish}
+                            disabled={isPublishing}
+                          >
+                            {isPublishing ? (
+                              <Loader2 className="animate-spin" />
+                            ) : (
+                              <ShieldCheck className="w-4 h-4 stroke-[3]" />
+                            )}
+                            Authorize
+                          </Button>
+                        </>
                       ) : (
-                        <Zap className="w-4 h-4 group-hover:fill-primary" />
+                        <div className="text-[10px] uppercase font-black text-muted-foreground/60 tracking-[0.2em] h-11 flex items-center px-6 bg-secondary/20 rounded-xl border border-border/20 backdrop-blur-lg">
+                          Requires Level 3 Clearance / Moderator
+                        </div>
                       )}
-                      Rescan
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-11 px-6 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 border-border/40 transition-all"
-                      onClick={handleDelete}
-                      title="Permanently Delete Event"
-                      disabled={isPublishing || isReprocessing}
-                    >
-                      <X className="w-4 h-4" />
-                      Delete
-                    </Button>
-                    <Button
-                      className="h-11 px-8 rounded-xl text-sm font-black uppercase tracking-widest gap-3 shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all bg-primary hover:bg-primary/90 text-primary-foreground"
-                      onClick={handlePublish}
-                      disabled={isPublishing}
-                    >
-                      {isPublishing ? (
-                        <Loader2 className="animate-spin" />
-                      ) : (
-                        <ShieldCheck className="w-4 h-4 stroke-[3]" />
-                      )}
-                      Authorize
-                    </Button>
-                  </div>
+                    </div>
                   <div className="flex flex-col items-start gap-1 p-2.5 px-4 rounded-xl border border-border/10 bg-secondary/5">
                     <span className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground/50">
                       Intel ID Hash

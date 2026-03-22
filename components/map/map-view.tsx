@@ -72,10 +72,13 @@ interface MapEvent {
 }
 
 interface MapViewProps {
-  isAdmin: boolean;
+  role: string;
 }
 
-export function MapView({ isAdmin }: MapViewProps) {
+export function MapView({ role }: MapViewProps) {
+  const canEdit = ["owner", "admin", "moderator"].includes(role);
+  const canDelete = ["owner", "admin"].includes(role);
+
   const { theme } = useTheme();
   const searchParams = useSearchParams();
   const mapRef = React.useRef<MapRef>(null);
@@ -386,7 +389,8 @@ export function MapView({ isAdmin }: MapViewProps) {
             >
               <PopupContent
                 event={selectedEvent}
-                isAdmin={isAdmin}
+                canEdit={canEdit}
+                canDelete={canDelete}
                 isEditing={isEditing}
                 onToggleEdit={(val) => {
                   setIsEditing(val);
@@ -428,14 +432,16 @@ export function MapView({ isAdmin }: MapViewProps) {
 
 function PopupContent({
   event,
-  isAdmin,
+  canEdit,
+  canDelete,
   isEditing,
   onToggleEdit,
   onDelete,
   onUpdate,
 }: {
   event: MapEvent;
-  isAdmin: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
   isEditing: boolean;
   onToggleEdit: (val: boolean) => void;
   onDelete: (id: string) => Promise<void>;
@@ -580,9 +586,9 @@ function PopupContent({
           </Button>
         )}
 
-        {isAdmin && (
+        {canEdit && (
           <div className="pt-2 mt-2 border-t border-border/30">
-            {showDeleteConfirm ? (
+            {showDeleteConfirm && canDelete ? (
               <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                 <p className="text-[10px] font-bold text-destructive uppercase text-center tracking-widest">
                   Confirm Deletion?
@@ -619,18 +625,23 @@ function PopupContent({
               </div>
             ) : (
               <div className="flex gap-2">
+                {canDelete && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 h-8 rounded-lg gap-2 text-[9px] font-bold uppercase hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all font-display"
+                    onClick={() => setShowDeleteConfirm(true)}
+                  >
+                    <Trash2 className="w-3 h-3" /> Delete
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 h-8 rounded-lg gap-2 text-[9px] font-bold uppercase hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all font-display"
-                  onClick={() => setShowDeleteConfirm(true)}
-                >
-                  <Trash2 className="w-3 h-3" /> Delete
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 h-8 rounded-lg gap-2 text-[9px] font-bold uppercase hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all font-display"
+                  className={cn(
+                    "h-8 rounded-lg gap-2 text-[9px] font-bold uppercase hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all font-display",
+                    canDelete ? "flex-1" : "w-full"
+                  )}
                   onClick={() => onToggleEdit(true)}
                 >
                   <Edit3 className="w-3 h-3" /> Edit

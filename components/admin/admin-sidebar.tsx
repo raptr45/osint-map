@@ -21,33 +21,48 @@ const MENU_ITEMS = [
     title: "Overview",
     href: "/admin",
     icon: LayoutDashboard,
+    requiredClearance: "analyst",
   },
   {
     title: "Moderation Queue",
     href: "/admin/queue",
     icon: MessageSquareQuote,
-    badge: "New"
+    badge: "New",
+    requiredClearance: "analyst", // Analysts can view the queue, but can't edit
   },
   {
     title: "User Roles",
     href: "/admin/roles",
     icon: Users,
+    requiredClearance: "admin",
   },
   {
     title: "Signal Sources",
     href: "/admin/sources",
     icon: Database,
+    requiredClearance: "admin",
   },
   {
     title: "System Logs",
     href: "/admin/logs",
     icon: BarChart3,
+    requiredClearance: "moderator", // Logs are somewhat sensitive, but moderators can see
   },
 ];
+
+const ROLE_RANKS: Record<string, number> = {
+  owner: 4,
+  admin: 4,
+  moderator: 3,
+  analyst: 2,
+  user: 1,
+};
 
 export function AdminSidebar() {
   const pathname = usePathname();
   const { data: session } = authClient.useSession();
+  
+  const userRank = ROLE_RANKS[(session?.user as Record<string, unknown>)?.role as string || "user"] || 1;
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-background border-r border-border/50 flex flex-col z-50">
@@ -75,7 +90,7 @@ export function AdminSidebar() {
         <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-4 mt-2">
           Administration
         </div>
-        {MENU_ITEMS.map((item) => {
+        {MENU_ITEMS.filter(item => userRank >= (ROLE_RANKS[item.requiredClearance] || 1)).map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link

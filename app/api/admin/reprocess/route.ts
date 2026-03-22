@@ -2,11 +2,11 @@ import { db } from "@/lib/db";
 import { pendingEvents } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/admin-check";
+import { hasClearance } from "@/lib/admin-check";
 import { reprocessEvent } from "@/lib/ingest-pipeline";
 
 export async function POST(request: Request) {
-  if (!(await isAdmin())) {
+  if (!(await hasClearance("moderator"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

@@ -1,11 +1,11 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/admin-check";
+import { hasClearance } from "@/lib/admin-check";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  if (!(await isAdmin())) {
+  if (!(await hasClearance("analyst"))) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 

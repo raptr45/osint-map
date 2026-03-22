@@ -1,6 +1,6 @@
 import { UserProfile } from "@/components/auth/user-profile";
 import { MapView } from "@/components/map/map-view";
-import { isAdmin } from "@/lib/admin-check";
+import { hasClearance, getServerSession } from "@/lib/admin-check";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,8 @@ import { HeaderFilters } from "@/components/header-filters";
 import { Suspense } from "react";
 
 export default async function Home() {
-  const admin = await isAdmin();
+  const canAccessTerminal = await hasClearance("analyst");
+  const session = await getServerSession();
 
   return (
     <div className="relative h-screen flex flex-col font-sans bg-background overflow-hidden">
@@ -55,7 +56,7 @@ export default async function Home() {
           </div>
           
           <div className="flex items-center gap-2">
-            {admin && (
+            {canAccessTerminal && (
                 <Button asChild variant="ghost" size="sm" className="hidden md:flex gap-2 rounded-full h-10 px-4 text-xs font-bold uppercase tracking-widest text-primary hover:bg-primary/10 hover:text-primary transition-all border border-transparent hover:border-primary/20">
                 <Link href="/admin">
                     <ShieldCheck className="w-3.5 h-3.5" />
@@ -71,7 +72,8 @@ export default async function Home() {
       </header>
 
       <main className="flex-1 relative p-4">
-        <MapView isAdmin={admin} />
+        {/* Pass the actual session role for granular permission control on the map */}
+        <MapView role={session?.user?.role || "user"} />
       </main>
     </div>
   );
