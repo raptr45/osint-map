@@ -159,8 +159,8 @@ async function startTelegramIngestor() {
           await new Promise((resolve) => setTimeout(resolve, 5000));
         }
       }
-    } catch (err) {
-      console.warn(`⚠️ Could not prime channel @${channelName}:`, err);
+    } catch {
+      console.warn(`⚠️ Could not prime channel @${channelName}`);
     }
   }
 
@@ -182,10 +182,8 @@ async function startTelegramIngestor() {
       try {
         await client.connect();
         console.log("✅ Reconnected.");
-      } catch (err) {
-        console.error(
-          "❌ Reconnect failed. Crashing to trigger Railway restart."
-        );
+      } catch {
+        console.error("❌ Reconnect failed. Crashing to trigger Railway restart.");
         process.exit(1);
       }
     }

@@ -59,7 +59,12 @@ To start the live Telegram MTProto listener:
 1. Ensure `TELEGRAM_API_ID` and `TELEGRAM_API_HASH` are in your `.env`.
 2. Run:
 ```bash
-pnpm tsx ingest/telegram-ingestor.ts
+pnpm start:ingest
 ```
-3. Follow the CLI prompts to log in.
-4. Copy the **Session String** printed in the terminal and save it to `TELEGRAM_SESSION` in your `.env` so you don't have to log in every time.
+
+### 🛡️ Reliability Features
+The `ingest/telegram-ingestor.ts` is designed for **24/7 Production Stability**:
+- **Heartbeat Monitoring**: Logs a "💓 Heartbeat" every 15 minutes to confirm the process is alive.
+- **Auto-Reconnect**: Automatically detects silent connection drops and attempts to reconnect without crashing.
+- **Rate Limit Throttling**: Includes a built-in 5-second delay between AI parsing tasks to respect Gemini API Free Tier quotas.
+- **Stale Lock Cleanup**: Automatically clears its own PID lock file in cloud environments (Railway/Vercel) to ensure smooth restarts after a crash.
