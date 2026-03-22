@@ -150,13 +150,29 @@ async function startTelegramIngestor() {
     if (username && TARGET_CHANNELS.includes(username?.toString())) {
       let imageUrl: string | undefined;
 
-      // Extremely basic media extraction for web previews
-      if (message.media && 'webpage' in message.media) {
+      // 1. Check for native photo media
+      if (message.media instanceof Api.MessageMediaPhoto) {
+        try {
+          const photoName = `tg_${username}_${message.id}.jpg`;
+          const localPath = path.join(process.cwd(), "public", "media", photoName);
+          
+          console.log(`📸 Image detected. Downloading to: ${localPath}`);
+          await client.downloadMedia(message.media, { outputFile: localPath });
+          imageUrl = `/media/${photoName}`;
+        } catch (err) {
+          console.error("❌ Failed to download message photo:", err);
+        }
+      } 
+      // 2. Fallback to web preview thumbnails
+      else if (message.media instanceof Api.MessageMediaWebPage && message.media.webpage instanceof Api.WebPage) {
         const webpage = message.media.webpage;
-        if (webpage && 'photo' in webpage) {
-            // We can't trivially convert MTProto Photo to URL without downloading, 
-            // but if there's an external url sometimes in webpage, we could try.
-            // For now, let's leave imageUrl undefined unless it's a direct url.
+        if (webpage.photo instanceof Api.Photo) {
+           try {
+             const photoName = `preview_${username}_${message.id}.jpg`;
+             const localPath = path.join(process.cwd(), "public", "media", photoName);
+             await client.downloadMedia(webpage.photo as unknown as Api.TypeMessageMedia, { outputFile: localPath });
+             imageUrl = `/media/${photoName}`;
+           } catch {}
         }
       }
 
@@ -179,6 +195,20 @@ async function startTelegramIngestor() {
       console.log(`📥 Priming ${msgs.length} messages from @${channelName}`);
       for (const msg of msgs) {
         if (msg.text) {
+          let imageUrl: string | undefined;
+          
+          // Historical media extraction
+          if (msg.media instanceof Api.MessageMediaPhoto) {
+            try {
+              const photoName = `tg_${channelName}_${msg.id}.jpg`;
+              const localPath = path.join(process.cwd(), "public", "media", photoName);
+              if (!fs.existsSync(localPath)) {
+                await client.downloadMedia(msg.media, { outputFile: localPath });
+              }
+              imageUrl = `/media/${photoName}`;
+            } catch {}
+          }
+
           console.log(
             `📄 Processing message text: "${msg.text.substring(0, 30)}..."`
           );
@@ -186,6 +216,7 @@ async function startTelegramIngestor() {
             externalId: `tg_${channelName}_${msg.id}`,
             source: channelName,
             sourceCreatedAt: new Date(msg.date * 1000),
+            imageUrl,
           });
           // Add delay to avoid rate limiting
           await new Promise((resolve) => setTimeout(resolve, 5000));
