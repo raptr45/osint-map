@@ -2,13 +2,13 @@ import { db } from "@/lib/db";
 import { publishedEvents } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/admin-check";
+import { hasClearance } from "@/lib/admin-check";
 
 export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await isAdmin())) {
+  if (!(await hasClearance("moderator"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
@@ -26,7 +26,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await isAdmin())) {
+  if (!(await hasClearance("moderator"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

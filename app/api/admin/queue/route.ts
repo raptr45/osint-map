@@ -2,10 +2,10 @@ import { db } from "@/lib/db";
 import { pendingEvents } from "@/lib/schema";
 import { desc, sql, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/admin-check";
+import { hasClearance } from "@/lib/admin-check";
 
 export async function GET() {
-  if (!(await isAdmin())) {
+  if (!(await hasClearance("analyst"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
   try {
@@ -33,7 +33,7 @@ export async function GET() {
 }
 
 export async function DELETE(request: Request) {
-  if (!(await isAdmin())) {
+  if (!(await hasClearance("moderator"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

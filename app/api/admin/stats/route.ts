@@ -3,10 +3,10 @@ import { pendingEvents, publishedEvents, ingestSources } from "@/lib/schema";
 import { user } from "@/lib/auth-schema";
 import { count, eq, desc, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/admin-check";
+import { hasClearance } from "@/lib/admin-check";
 
 export async function GET() {
-  if (!(await isAdmin())) {
+  if (!(await hasClearance("analyst"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

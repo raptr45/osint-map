@@ -3,11 +3,11 @@ import { pendingEvents, publishedEvents } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { pointSql } from "@/lib/map-logic";
-import { getServerSession } from "@/lib/admin-check";
+import { getServerSession, hasClearance } from "@/lib/admin-check";
 
 export async function POST(req: Request) {
   const session = await getServerSession();
-  if (session?.user?.role !== "admin") {
+  if (!session || !(await hasClearance("moderator"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
