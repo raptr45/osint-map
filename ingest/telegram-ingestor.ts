@@ -1,16 +1,16 @@
+import { put } from "@vercel/blob";
 import "dotenv/config";
+import { eq } from "drizzle-orm";
 import fs from "fs";
 import input from "input";
 import path from "path";
 import { Api, TelegramClient } from "telegram";
-import { put } from "@vercel/blob";
 import { NewMessage } from "telegram/events";
 import { NewMessageEvent } from "telegram/events/NewMessage";
 import { StringSession } from "telegram/sessions";
-import { processIngestion } from "../lib/ingest-pipeline";
 import { db } from "../lib/db";
+import { processIngestion } from "../lib/ingest-pipeline";
 import { ingestSources } from "../lib/schema";
-import { eq } from "drizzle-orm";
 
 const LOCK_FILE = path.join(process.cwd(), ".ingestor.lock");
 
@@ -84,17 +84,24 @@ async function refreshSources() {
       where: eq(ingestSources.isActive, true),
     });
     // Assuming type 'telegram' and value holds the username
-    const newChannels = sources.filter(s => s.type === "telegram").map(s => s.value);
+    const newChannels = sources
+      .filter((s) => s.type === "telegram")
+      .map((s) => s.value);
     // If DB is empty, fallback or just use empty list
-    TARGET_CHANNELS = newChannels.length > 0 ? newChannels : [
-      "liveuamap",
-      "DeepStateUA",
-      "clashreport",
-      "osintdefender",
-      "auroraintel",
-      "bnonews",
-    ];
-    console.log(`\n🛰️ Updated monitoring channels: ${TARGET_CHANNELS.join(", ")}`);
+    TARGET_CHANNELS =
+      newChannels.length > 0
+        ? newChannels
+        : [
+            "liveuamap",
+            "DeepStateUA",
+            "clashreport",
+            "osintdefender",
+            "auroraintel",
+            "bnonews",
+          ];
+    console.log(
+      `\n🛰️ Updated monitoring channels: ${TARGET_CHANNELS.join(", ")}`
+    );
   } catch (err) {
     console.error("Failed to refresh sources from DB:", err);
   }
@@ -107,6 +114,15 @@ async function startTelegramIngestor() {
     if (!apiId) console.error("❌ Missing: TELEGRAM_API_ID");
     if (!apiHash) console.error("❌ Missing: TELEGRAM_API_HASH");
     process.exit(1);
+  }
+
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    console.error("❌ ERROR: BLOB_READ_WRITE_TOKEN is missing from .env");
+    console.error("Local media uploads will fail.");
+  } else {
+    console.log(
+      "🌐 Vercel Blob Token detected. Ready for cloud media storage."
+    );
   }
 
   console.log("📡 Starting Telegram MTProto Ingestor...");
@@ -155,32 +171,74 @@ async function startTelegramIngestor() {
       if (message.media instanceof Api.MessageMediaPhoto) {
         try {
           const photoName = `tg_${username}_${message.id}.jpg`;
-          console.log(`📸 Image detected. Uploading to Vercel Blob: ${photoName}`);
-          
-          const buffer = await client.downloadMedia(message.media, {}) as Buffer;
+          console.log(
+            `📸 Image detected. Uploading to Vercel Blob: ${photoName}`
+          );
+
+          const buffer = (await client.downloadMedia(
+            message.media,
+            {}
+          )) as Buffer;
           const { url } = await put(`media/${photoName}`, buffer, {
             access: "public",
           });
           imageUrl = url;
-          console.log(`✅ Uploaded: ${url}`);
+          console.log(`✅ Uploaded image: ${url}`);
         } catch (err) {
           console.error("❌ Failed to upload message photo:", err);
         }
-      } 
-      // 2. Fallback to web preview thumbnails
-      else if (message.media instanceof Api.MessageMediaWebPage && message.media.webpage instanceof Api.WebPage) {
+      }
+      // 2. Check for video media (extract thumbnail)
+      else if (message.media instanceof Api.MessageMediaDocument) {
+        const doc = message.media.document as Api.Document;
+        if (doc.mimeType?.startsWith("video/")) {
+          try {
+            const thumbName = `tg_thumb_${username}_${message.id}.jpg`;
+            console.log(
+              `🎬 Video detected. Extracting thumbnail: ${thumbName}`
+            );
+
+            const buffer = (await client.downloadMedia(message.media, {
+              // @ts-expect-error - thumbIdx is internal to GramJS but not in the typings
+              thumbIdx: 0,
+            })) as Buffer;
+
+            if (buffer) {
+              const { url } = await put(`media/${thumbName}`, buffer, {
+                access: "public",
+              });
+              imageUrl = url;
+              console.log(`✅ Uploaded video thumbnail: ${url}`);
+            }
+          } catch (err) {
+            console.error("❌ Failed to extraction video thumbnail:", err);
+          }
+        }
+      }
+      // 3. Fallback to web preview thumbnails
+      else if (
+        message.media instanceof Api.MessageMediaWebPage &&
+        message.media.webpage instanceof Api.WebPage
+      ) {
         const webpage = message.media.webpage;
         if (webpage.photo instanceof Api.Photo) {
-           try {
-             const photoName = `preview_${username}_${message.id}.jpg`;
-             const buffer = await client.downloadMedia(webpage.photo as unknown as Api.TypeMessageMedia, {}) as Buffer;
-             const { url } = await put(`media/${photoName}`, buffer, {
-               access: "public",
-             });
-             imageUrl = url;
-           } catch (err) {
-             console.error("❌ Failed to upload preview photo:", err);
-           }
+          try {
+            const photoName = `preview_${username}_${message.id}.jpg`;
+            console.log(
+              `🔗 Web preview detected. Uploading thumbnail: ${photoName}`
+            );
+            const buffer = (await client.downloadMedia(
+              webpage.photo as unknown as Api.TypeMessageMedia,
+              {}
+            )) as Buffer;
+            const { url } = await put(`media/${photoName}`, buffer, {
+              access: "public",
+            });
+            imageUrl = url;
+            console.log(`✅ Uploaded preview: ${url}`);
+          } catch (err) {
+            console.error("❌ Failed to upload preview photo:", err);
+          }
         }
       }
 
@@ -188,7 +246,7 @@ async function startTelegramIngestor() {
         externalId: `tg_${username}_${message.id}`,
         source: username.toString(),
         sourceCreatedAt: new Date(message.date * 1000),
-        imageUrl
+        imageUrl,
       });
     }
   }, new NewMessage({}));
@@ -204,21 +262,53 @@ async function startTelegramIngestor() {
       for (const msg of msgs) {
         if (msg.text) {
           let imageUrl: string | undefined;
-          
+
           // Historical media extraction
           if (msg.media instanceof Api.MessageMediaPhoto) {
             try {
               const photoName = `tg_${channelName}_${msg.id}.jpg`;
               console.log(`📸 Priming image: ${photoName}`);
-              
-              const buffer = await client.downloadMedia(msg.media, {}) as Buffer;
+
+              const buffer = (await client.downloadMedia(
+                msg.media,
+                {}
+              )) as Buffer;
               const { url } = await put(`media/${photoName}`, buffer, {
                 access: "public",
-                addRandomSuffix: false, // Keep id-based stable naming
+                addRandomSuffix: false,
               });
               imageUrl = url;
             } catch (err) {
-              console.error(`❌ Failed to prime image for ${channelName}_${msg.id}:`, err);
+              console.error(
+                `❌ Failed to prime image for ${channelName}_${msg.id}:`,
+                err
+              );
+            }
+          } else if (msg.media instanceof Api.MessageMediaDocument) {
+            const doc = msg.media.document as Api.Document;
+            if (doc.mimeType?.startsWith("video/")) {
+              try {
+                const thumbName = `tg_thumb_${channelName}_${msg.id}.jpg`;
+                console.log(`🎬 Priming video thumbnail: ${thumbName}`);
+
+                const buffer = (await client.downloadMedia(msg.media, {
+                  // @ts-expect-error - thumbIdx is internal to GramJS but not in the typings
+                  thumbIdx: 0,
+                })) as Buffer;
+
+                if (buffer) {
+                  const { url } = await put(`media/${thumbName}`, buffer, {
+                    access: "public",
+                    addRandomSuffix: false,
+                  });
+                  imageUrl = url;
+                }
+              } catch (err) {
+                console.error(
+                  `❌ Failed to prime video thumb for ${channelName}_${msg.id}:`,
+                  err
+                );
+              }
             }
           }
 
@@ -260,7 +350,9 @@ async function startTelegramIngestor() {
         await client.connect();
         console.log("✅ Reconnected.");
       } catch {
-        console.error("❌ Reconnect failed. Crashing to trigger Railway restart.");
+        console.error(
+          "❌ Reconnect failed. Crashing to trigger Railway restart."
+        );
         process.exit(1);
       }
     }

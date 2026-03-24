@@ -67,6 +67,7 @@ interface MapEvent {
   severity: "low" | "medium" | "high" | "critical";
   lng: number;
   lat: number;
+  imageUrl?: string | null;
   sourceUrl?: string | null;
   createdAt: string;
 }
@@ -570,8 +571,18 @@ function PopupContent({
       <p className="text-[11px] text-muted-foreground/90 line-clamp-4 mb-4 leading-relaxed">
         {event.description}
       </p>
+      <div className="space-y-4">
+        {event.imageUrl && (
+          <div className="rounded-xl overflow-hidden border border-border/30 shadow-lg shadow-black/20">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={event.imageUrl} 
+              alt={event.title} 
+              className="w-full h-32 object-cover hover:scale-110 transition-transform duration-500" 
+            />
+          </div>
+        )}
 
-      <div className="space-y-2">
         {event.sourceUrl && (
           <Button
             asChild
@@ -581,7 +592,7 @@ function PopupContent({
           >
             <a href={event.sourceUrl} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="w-3.5 h-3.5" />
-              READ INTEL SOURCE
+              {event.sourceUrl.includes("t.me") ? "OPEN ON TELEGRAM" : "READ INTEL SOURCE"}
             </a>
           </Button>
         )}
