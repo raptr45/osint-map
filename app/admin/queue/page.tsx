@@ -217,7 +217,15 @@ export default function ModerationQueue() {
       const res = await fetch("/api/admin/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: selectedPending.id, title: editTitle, description: editDesc, lng: editPos.lng, lat: editPos.lat, severity: editSeverity }),
+        body: JSON.stringify({ 
+          id: selectedPending.id, 
+          title: editTitle, 
+          description: editDesc, 
+          lng: editPos.lng, 
+          lat: editPos.lat, 
+          severity: editSeverity,
+          sourceUrl: editSourceUrl
+        }),
       });
       if (res.ok) { mutate(); mutatePublished(); setSelectedPendingId(null); }
     } finally { setIsPublishing(false); }
@@ -413,6 +421,7 @@ export default function ModerationQueue() {
                                   <span className="text-[10px] font-black text-muted-foreground/40 tabular-nums">{formatRelativeTime(item.sourceCreatedAt || item.createdAt)}</span>
                                   {item.source && <Badge variant="outline" className="h-3.5 text-[9px] px-1.5 font-black border-primary/20 text-primary bg-primary/5">{item.source}</Badge>}
                                   {item.imageUrl && <ImageIcon className="w-2.5 h-2.5 text-muted-foreground/30" />}
+                                  {item.sourceUrl && <Globe className="w-2.5 h-2.5 text-primary/40" />}
                                 </div>
                                 <ChevronRight className={cn("w-3 h-3 transition-all text-muted-foreground/20", selectedPendingId === item.id ? "text-primary translate-x-0.5" : "group-hover:text-primary/40")} />
                               </div>

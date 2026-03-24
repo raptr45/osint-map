@@ -13,7 +13,7 @@ export async function POST(req: Request) {
 
   const userId = session.user.id;
   try {
-    const { id, title, description, lng, lat, severity } = await req.json();
+    const { id, title, description, lng, lat, severity, sourceUrl } = await req.json();
 
     // 1. Get the pending event
     const [pending] = await db.select().from(pendingEvents).where(eq(pendingEvents.id, id));
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
       description: description || pending.suggestedDescription || "",
       severity: severity || "medium",
       imageUrl: pending.imageUrl,
-      sourceUrl: pending.sourceUrl,
+      sourceUrl: sourceUrl || pending.sourceUrl,
       sourceMetadata: pending.sourceMetadata,
       sourceCreatedAt: pending.sourceCreatedAt,
       coordinates: pointSql(lng, lat),
