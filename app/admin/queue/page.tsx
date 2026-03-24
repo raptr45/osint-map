@@ -73,6 +73,7 @@ export default function ModerationQueue() {
   const role = (session?.user as Record<string, unknown>)?.role as string || "user";
   const canModerate = ["owner", "admin", "moderator"].includes(role);
   const canPurge = ["owner", "admin"].includes(role);
+  const canAddCustomEvent = ["owner", "admin"].includes(role);
 
   // Tab state
   const [activeTab, setActiveTab] = React.useState<"pending" | "published">("pending");
@@ -110,7 +111,13 @@ export default function ModerationQueue() {
   const [isSaving, setIsSaving] = React.useState(false);
   const [isSwitchingProvider, setIsSwitchingProvider] = React.useState(false);
   const [showClearDialog, setShowClearDialog] = React.useState(false);
+  const [showManualDialog, setShowManualDialog] = React.useState(false);
   const [showDeletePublishedDialog, setShowDeletePublishedDialog] = React.useState(false);
+  const [manualInput, setManualInput] = React.useState("");
+  const [manualSource, setManualSource] = React.useState("");
+  const [manualSourceUrl, setManualSourceUrl] = React.useState("");
+  const [manualImageUrl, setManualImageUrl] = React.useState("");
+  const [isIngestingManual, setIsIngestingManual] = React.useState(false);
   const [sortBy, setSortBy] = React.useState<"date" | "source">("date");
   const [isLayoutLoaded, setIsLayoutLoaded] = React.useState(false);
   const [mainLayout, setMainLayout] = React.useState<Record<string, number> | undefined>(undefined);
@@ -249,6 +256,28 @@ export default function ModerationQueue() {
     } finally { setIsPublishing(false); }
   };
 
+  const handleManualIngest = async () => {
+    if (!manualInput || manualInput.length < 10) return;
+    setIsIngestingManual(true);
+    try {
+      const res = await fetch("/api/admin/queue/manual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          rawText: manualInput, 
+          source: manualSource || "manual_admin", 
+          sourceUrl: manualSourceUrl || undefined, 
+          imageUrl: manualImageUrl || undefined 
+        }),
+      });
+      if (res.ok) { 
+        mutate(); 
+        setManualInput(""); setManualSource(""); setManualSourceUrl(""); setManualImageUrl(""); 
+        setShowManualDialog(false); 
+      }
+    } finally { setIsIngestingManual(false); }
+  };
+
   const handleSavePublished = async () => {
     if (!selectedPublished) return;
     setIsSaving(true);
@@ -330,6 +359,12 @@ export default function ModerationQueue() {
             <Button variant="outline" size="sm" onClick={() => setShowClearDialog(true)}
               className="gap-2 h-9 rounded-md px-4 text-xs font-black uppercase text-destructive/80 border-destructive/20 hover:bg-destructive/10 bg-destructive/5">
               <Trash2 className="w-3.5 h-3.5" /> Purge Queue
+            </Button>
+          )}
+          {canAddCustomEvent && (
+            <Button variant="outline" size="sm" onClick={() => setShowManualDialog(true)}
+              className="gap-2 h-9 rounded-md px-4 text-xs font-black uppercase text-primary/80 border-primary/20 hover:bg-primary/10 bg-primary/5">
+              <Edit3 className="w-3.5 h-3.5" /> Manual Intel
             </Button>
           )}
           <Button variant="outline" size="sm" onClick={() => { mutate(); mutatePublished(); }}
@@ -852,6 +887,64 @@ export default function ModerationQueue() {
             <Button variant="ghost" onClick={() => setShowDeletePublishedDialog(false)} className="flex-1 h-11 rounded-xl text-xs font-black uppercase">Cancel</Button>
             <Button variant="destructive" onClick={handleDeletePublished} disabled={isPublishing} className="flex-1 h-11 rounded-xl text-xs font-black uppercase">
               {isPublishing ? <Loader2 className="animate-spin" /> : "Confirm Unpublish"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manual Intel Input Dialog */}
+      <Dialog open={showManualDialog} onOpenChange={setShowManualDialog}>
+        <DialogContent className="max-w-2xl bg-background/95 backdrop-blur-3xl border-primary/20 rounded-[2.5rem] p-10 font-sans shadow-[0_32px_128px_-16px_rgba(var(--primary),0.2)]">
+          <DialogHeader className="space-y-4 mb-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-inner">
+                <Edit3 className="w-7 h-7 text-primary shadow-primary" />
+              </div>
+              <div>
+                <DialogTitle className="text-2xl font-black uppercase tracking-tight font-display">Intelligence Ingestion</DialogTitle>
+                <DialogDescription className="text-muted-foreground/60 font-medium text-xs tracking-wide uppercase">Manual Manual Signal Injection Protocol</DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-6 pt-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest pl-1">Raw Intelligence Content</label>
+              <textarea placeholder="DESCRIBE THE SITUATION IN DETAIL..." 
+                className="w-full bg-secondary/20 border border-border/20 rounded-2xl p-5 text-sm h-40 resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all leading-relaxed font-medium placeholder:text-muted-foreground/20"
+                value={manualInput} onChange={e => setManualInput(e.target.value)} />
+              <p className="text-[9px] text-muted-foreground/40 font-bold tracking-widest uppercase pl-1">Minimum 10 characters required for AI enrichment</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest pl-1">Source Name</label>
+                <input placeholder="E.G. OSINTDEFENDER" 
+                  className="w-full bg-secondary/20 border border-border/20 rounded-xl px-4 h-12 text-xs font-black uppercase tracking-tight focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-muted-foreground/20"
+                  value={manualSource} onChange={e => setManualSource(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest pl-1">Original URL</label>
+                <input placeholder="HTTP://..." 
+                  className="w-full bg-secondary/20 border border-border/20 rounded-xl px-4 h-12 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-muted-foreground/20"
+                  value={manualSourceUrl} onChange={e => setManualSourceUrl(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest pl-1">Image Endpoint (Optional)</label>
+              <input placeholder="HTTPS://BOLB.VERCEL.APP/..." 
+                className="w-full bg-secondary/20 border border-border/20 rounded-xl px-4 h-12 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-muted-foreground/20"
+                value={manualImageUrl} onChange={e => setManualImageUrl(e.target.value)} />
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-4 pt-10 mt-4 border-t border-border/10">
+            <Button variant="ghost" onClick={() => setShowManualDialog(false)} className="flex-1 h-12 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-secondary/40">Abort Protocol</Button>
+            <Button onClick={handleManualIngest} disabled={isIngestingManual || manualInput.length < 10} 
+              className="flex-1 h-12 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 group overflow-hidden relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              {isIngestingManual ? <Loader2 className="animate-spin" /> : "Initiate Injection"}
             </Button>
           </DialogFooter>
         </DialogContent>
