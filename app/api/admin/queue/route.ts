@@ -19,6 +19,7 @@ export async function GET() {
       sourceCreatedAt: pendingEvents.sourceCreatedAt,
       createdAt: pendingEvents.createdAt,
       externalId: pendingEvents.externalId,
+      imageUrl: pendingEvents.imageUrl,
       lng: sql<number | null>`ST_X(${pendingEvents.suggestedCoordinates})`,
       lat: sql<number | null>`ST_Y(${pendingEvents.suggestedCoordinates})`,
     })
