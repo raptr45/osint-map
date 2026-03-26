@@ -87,7 +87,7 @@ export function AdminSidebar() {
       </div>
 
       <nav className="flex-1 px-4 space-y-1">
-        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-4 mt-2">
+        <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide px-4 mb-4 mt-2">
           Administration
         </div>
         {MENU_ITEMS.filter(item => userRank >= (ROLE_RANKS[item.requiredClearance] || 1)).map((item) => {
@@ -108,7 +108,7 @@ export function AdminSidebar() {
                 <span>{item.title}</span>
               </div>
               {item.badge && (
-                <span className="text-[9px] font-bold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full shadow-sm shadow-primary/20">
+                <span className="text-[11px] font-semibold bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full shadow-sm shadow-primary/20">
                   {item.badge}
                 </span>
               )}
@@ -129,7 +129,7 @@ export function AdminSidebar() {
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="text-sm font-bold truncate">{session?.user.name}</span>
-                <span className="text-[10px] text-primary font-bold uppercase tracking-tight">System Admin</span>
+                <span className="text-[11px] text-primary font-semibold uppercase tracking-tight">System Admin</span>
               </div>
           </div>
           <Button 

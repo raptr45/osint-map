@@ -60,7 +60,7 @@ export default function SystemLogsPage() {
     return (
       <div className="p-8 space-y-8 flex flex-col items-center justify-center min-h-[60vh] opacity-50">
         <Network className="w-10 h-10 animate-pulse text-primary" />
-        <p className="text-xs font-bold uppercase tracking-widest">Synchronizing Telemetry...</p>
+        <p className="text-xs font-bold uppercase tracking-wide">Synchronizing Telemetry...</p>
       </div>
     );
   }
@@ -81,7 +81,7 @@ export default function SystemLogsPage() {
             variant="outline"
             size="sm"
             onClick={() => window.open("/api/admin/logs?mode=export", "_blank")}
-            className="h-10 rounded-xl gap-2 text-xs font-bold uppercase tracking-widest bg-card/20 border-border/40"
+            className="h-10 rounded-xl gap-2 text-xs font-semibold uppercase tracking-wide bg-card/20 border-border/40"
           >
             <Download className="w-3.5 h-3.5" /> Export
           </Button>
@@ -89,7 +89,7 @@ export default function SystemLogsPage() {
             variant="default"
             size="sm"
             onClick={() => mutate()}
-            className="h-10 rounded-xl gap-2 text-xs font-bold uppercase tracking-widest shadow-xl shadow-primary/20"
+            className="h-10 rounded-xl gap-2 text-xs font-semibold uppercase tracking-wide shadow-xl shadow-primary/20"
           >
             <RefreshCcw className="w-3.5 h-3.5" /> Refresh
           </Button>
@@ -125,7 +125,7 @@ export default function SystemLogsPage() {
               <stat.icon className="w-5 h-5" />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-[0.1em]">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {stat.label}
               </p>
               <p className="text-xl font-bold font-display">{stat.value}</p>
@@ -147,7 +147,7 @@ export default function SystemLogsPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-11 px-4 gap-2 text-xs font-bold uppercase tracking-widest hover:bg-secondary"
+              className="h-11 px-4 gap-2 text-xs font-semibold uppercase tracking-wide hover:bg-secondary"
             >
               <Filter className="w-3.5 h-3.5" /> Filter Modules
             </Button>
@@ -157,12 +157,12 @@ export default function SystemLogsPage() {
         <div className="flex-1 overflow-x-auto min-h-[400px]">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-border/20 text-xs font-bold text-muted-foreground uppercase bg-secondary/10">
-                <th className="px-6 py-4 tracking-widest">Severity</th>
-                <th className="px-6 py-4 tracking-widest">ID</th>
-                <th className="px-6 py-4 tracking-widest">Module</th>
-                <th className="px-6 py-4 tracking-widest">Message</th>
-                <th className="px-6 py-4 tracking-widest text-right">
+              <tr className="border-b border-border/20 text-xs font-semibold text-muted-foreground uppercase bg-secondary/10">
+                <th className="px-6 py-4 tracking-wide">Severity</th>
+                <th className="px-6 py-4 tracking-wide">ID</th>
+                <th className="px-6 py-4 tracking-wide">Module</th>
+                <th className="px-6 py-4 tracking-wide">Message</th>
+                <th className="px-6 py-4 tracking-wide text-right">
                   Timestamp
                 </th>
               </tr>
@@ -214,7 +214,7 @@ export default function SystemLogsPage() {
               ))}
               {(!data || data.length === 0) && (
                 <tr>
-                   <td colSpan={5} className="py-20 text-center text-muted-foreground italic text-xs uppercase tracking-widest opacity-40">No terminal logs recorded</td>
+                   <td colSpan={5} className="py-20 text-center text-muted-foreground italic text-xs uppercase tracking-wide opacity-40">No terminal logs recorded</td>
                 </tr>
               )}
             </tbody>
@@ -222,12 +222,12 @@ export default function SystemLogsPage() {
         </div>
 
         <div className="p-4 bg-secondary/10 border-t border-border/20 flex items-center justify-between">
-          <span className="text-xs font-bold text-muted-foreground opacity-50 uppercase tracking-[0.2em]">
+          <span className="text-xs font-medium text-muted-foreground opacity-50 uppercase tracking-wide">
             Live Stream Enabled
           </span>
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-bold text-emerald-500 uppercase tracking-widest">
+            <span className="text-xs font-semibold text-emerald-500 uppercase tracking-wide">
               Active
             </span>
           </div>

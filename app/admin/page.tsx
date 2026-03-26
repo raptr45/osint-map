@@ -68,7 +68,7 @@ export default function AdminOverview() {
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight font-display mb-1 uppercase">Command Overview</h1>
+        <h1 className="text-3xl font-bold tracking-tight font-display mb-1">Command Overview</h1>
         <p className="text-muted-foreground text-sm">System performance and intelligence throughput.</p>
       </div>
 
@@ -79,13 +79,13 @@ export default function AdminOverview() {
               <div className={cn("p-2 rounded-lg bg-background/50 border border-border/40", stat.color)}>
                 <stat.icon className="w-5 h-5" />
               </div>
-              <span className="text-xs font-bold text-emerald-500 flex items-center gap-1">
+              <span className="text-xs font-semibold text-emerald-500 flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />
                 {stat.trend}
               </span>
             </div>
             <div className="space-y-1">
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">{stat.label}</h3>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide leading-none mb-1">{stat.label}</h3>
               <p className="text-2xl font-bold tracking-tight font-display">{stat.value}</p>
             </div>
           </Card>
@@ -96,10 +96,10 @@ export default function AdminOverview() {
         <Card className="lg:col-span-2 p-6 bg-card/40 backdrop-blur-xl border-border/40 min-h-[400px]">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h3 className="text-lg font-bold font-display uppercase tracking-tight">Intelligence Ingestion</h3>
+              <h3 className="text-lg font-bold font-display tracking-tight">Intelligence Ingestion</h3>
               <p className="text-xs text-muted-foreground">Messages processed per hour across all channels.</p>
             </div>
-            <Button asChild variant="outline" size="sm" className="h-8 text-xs font-bold uppercase tracking-wider gap-2">
+            <Button asChild variant="outline" size="sm" className="h-8 text-xs font-semibold uppercase tracking-wide gap-2">
                <Link href="/admin/logs">
                 Full Report <ExternalLink className="w-3 h-3" />
                </Link>
@@ -124,7 +124,7 @@ export default function AdminOverview() {
           </div>
           <div className="flex justify-between mt-4 px-1">
             {["08:00", "12:00", "16:00", "20:00", "00:00", "04:00"].map(t => (
-              <span key={t} className="text-xs font-bold text-muted-foreground uppercase">{t}</span>
+              <span key={t} className="text-xs font-medium text-muted-foreground">{t}</span>
             ))}
           </div>
         </Card>
@@ -139,8 +139,8 @@ export default function AdminOverview() {
                   </div>
                   <div className="flex-1 pb-4">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{act.type}</span>
-                      <span className="text-xs font-bold text-muted-foreground flex items-center gap-1">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{act.type}</span>
+                      <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                         <Clock className="w-2.5 h-2.5" /> {formatDistanceToNow(new Date(act.time))} ago
                       </span>
                     </div>
@@ -149,7 +149,7 @@ export default function AdminOverview() {
                 </div>
               ))}
            </div>
-           <Button asChild variant="ghost" className="w-full mt-4 text-xs font-bold uppercase tracking-widest h-10 hover:bg-secondary">
+           <Button asChild variant="ghost" className="w-full mt-4 text-xs font-semibold uppercase tracking-wide h-10 hover:bg-secondary">
              <Link href="/admin/logs">
                 View Audit Log
              </Link>

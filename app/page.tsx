@@ -35,7 +35,7 @@ export default async function Home() {
             </div>
             <div className="flex flex-col h-full justify-center">
                 <span className="font-bold text-lg tracking-tight hidden sm:block uppercase text-foreground font-display leading-none">OSINT MAP</span>
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] leading-none mt-1 opacity-50 hidden sm:block">Tactical Node</span>
+                <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest leading-none mt-1 opacity-60 hidden sm:block">Tactical Node</span>
             </div>
           </div>
 
@@ -52,7 +52,7 @@ export default async function Home() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </div>
-              <span className="font-display uppercase tracking-wider">Operational Status: Nominal</span>
+              <span className="font-display uppercase tracking-wide">Operational Status: Nominal</span>
           </div>
           
           <div className="flex items-center gap-2">

@@ -60,7 +60,11 @@ const SCROLLBAR_STYLES = `
 const MAP_STYLE_LIGHT = "https://tiles.openfreemap.org/styles/bright";
 const MAP_STYLE_DARK = "https://tiles.openfreemap.org/styles/dark";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = (url: string) => fetch(url).then(async (res) => {
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to fetch");
+  return data;
+});
 
 interface MapEvent {
   id: string;
@@ -116,6 +120,7 @@ export function MapView({ role }: MapViewProps) {
   const {
     data: events,
     isLoading,
+    error: fetchError,
     mutate,
   } = useSWR(
     bbox
@@ -151,7 +156,7 @@ export function MapView({ role }: MapViewProps) {
   const mapStyle = theme === "dark" ? MAP_STYLE_DARK : MAP_STYLE_LIGHT;
 
   const groupedEvents = React.useMemo(() => {
-    if (!events) return {};
+    if (!Array.isArray(events)) return {};
     const groups: Record<string, MapEvent[]> = {};
     events.forEach((item: MapEvent) => {
       const date = new Date(item.createdAt).toLocaleDateString("en-US", {
@@ -193,7 +198,7 @@ export function MapView({ role }: MapViewProps) {
                 <h3 className="font-bold text-lg tracking-tight font-display">
                   System Feed
                 </h3>
-                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest leading-none font-sans">
+                <p className="text-[11px] text-muted-foreground uppercase font-medium tracking-wide leading-none font-sans">
                   Intelligence Stream
                 </p>
               </div>
@@ -204,7 +209,7 @@ export function MapView({ role }: MapViewProps) {
           </div>
 
           <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
-            <div className="flex items-center gap-2 text-[10px] font-bold text-primary/70 bg-primary/5 p-3 rounded-xl border border-primary/10">
+            <div className="flex items-center gap-2 text-[11px] font-semibold text-primary/70 bg-primary/5 p-3 rounded-xl border border-primary/10">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
@@ -216,7 +221,7 @@ export function MapView({ role }: MapViewProps) {
               Object.entries(groupedEvents).map(([date, dayEvents]) => (
                 <div key={date} className="space-y-3">
                   <div className="sticky top-0 bg-background/40 backdrop-blur-md py-1 z-10 flex items-center gap-2">
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/60">
                       {date}
                     </span>
                     <div className="h-px flex-1 bg-border/30" />
@@ -249,15 +254,15 @@ export function MapView({ role }: MapViewProps) {
                                 : "bg-primary"
                             )}
                           />
-                          <span className="text-[11px] font-bold truncate uppercase tracking-tight font-display">
+                          <span className="text-xs font-semibold truncate tracking-tight font-display">
                             {e.title}
                           </span>
                         </div>
-                        <span className="text-[9px] font-bold text-muted-foreground tabular-nums flex-shrink-0 mt-0.5">
+                        <span className="text-[11px] font-medium text-muted-foreground tabular-nums flex-shrink-0 mt-0.5">
                           {formatTime(e.createdAt)}
                         </span>
                       </div>
-                      <p className="text-[11px] text-muted-foreground/80 line-clamp-2 leading-relaxed mb-3">
+                      <p className="text-xs text-muted-foreground/80 line-clamp-2 leading-relaxed mb-3">
                         {e.description}
                       </p>
                       <div className="flex items-center justify-between">
@@ -267,7 +272,7 @@ export function MapView({ role }: MapViewProps) {
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(ev) => ev.stopPropagation()}
-                            className="text-[9px] font-bold text-primary/70 flex items-center gap-1 hover:text-primary transition-colors hover:underline underline-offset-2"
+                            className="text-[11px] font-semibold text-primary/70 flex items-center gap-1 hover:text-primary transition-colors hover:underline underline-offset-2"
                           >
                             <Globe className="w-2.5 h-2.5" />
                             {e.sourceUrl.includes("t.me") ? "TELEGRAM" : "INTEL SOURCE"}
@@ -290,8 +295,8 @@ export function MapView({ role }: MapViewProps) {
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center opacity-40">
                 <Activity className="w-12 h-12 mb-4 animate-pulse" />
-                <p className="text-xs font-bold uppercase tracking-widest">
-                  Scanning Viewport...
+                <p className="text-xs font-medium uppercase tracking-wide">
+                  {fetchError ? `Error: ${fetchError.message}` : "Scanning Viewport..."}
                 </p>
               </div>
             )}
@@ -530,7 +535,7 @@ function PopupContent({
                 key={s}
                 onClick={() => setSeverity(s)}
                 className={cn(
-                  "flex-1 py-1 rounded-md text-[9px] font-bold uppercase transition-all border",
+                  "flex-1 py-1 rounded-md text-[11px] font-semibold uppercase transition-all border",
                   severity === s
                     ? "bg-primary text-primary-foreground border-primary"
                     : "bg-secondary/30 text-muted-foreground border-border/40 hover:bg-secondary/50"
@@ -545,7 +550,7 @@ function PopupContent({
           <Button
             variant="outline"
             size="sm"
-            className="h-9 rounded-lg gap-2 text-[10px] font-bold uppercase transition-all hover:bg-secondary"
+            className="h-9 rounded-lg gap-2 text-[11px] font-semibold uppercase transition-all hover:bg-secondary"
             onClick={() => onToggleEdit(false)}
             disabled={isSaving}
           >
@@ -554,7 +559,7 @@ function PopupContent({
           <Button
             variant="default"
             size="sm"
-            className="h-9 rounded-lg gap-2 text-[10px] font-bold uppercase shadow-lg shadow-primary/10 transition-all hover:scale-[1.02]"
+            className="h-9 rounded-lg gap-2 text-[11px] font-semibold uppercase shadow-lg shadow-primary/10 transition-all hover:scale-[1.02]"
             disabled={isSaving}
             onClick={async () => {
               setIsSaving(true);
@@ -610,7 +615,7 @@ function PopupContent({
           <div className="flex items-center gap-2 min-w-0">
             <div
               className={cn(
-                "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider font-display flex-shrink-0",
+                "px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-display flex-shrink-0",
                 event.severity === "critical"
                   ? "bg-red-500/15 text-red-500 border border-red-500/20"
                   : event.severity === "high"
@@ -628,7 +633,7 @@ function PopupContent({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="text-[9px] font-bold text-muted-foreground/60 hover:text-primary flex items-center gap-1 truncate transition-colors"
+                className="text-[11px] font-medium text-muted-foreground/60 hover:text-primary flex items-center gap-1 truncate transition-colors"
               >
                 {event.sourceUrl.includes("t.me") ? (
                   <><Globe className="w-2.5 h-2.5 flex-shrink-0" /> TG<ExternalLink className="w-2 h-2 flex-shrink-0" /></>
@@ -638,7 +643,7 @@ function PopupContent({
               </a>
             )}
           </div>
-          <span className="text-[9px] font-bold text-muted-foreground/50 tabular-nums flex-shrink-0">
+          <span className="text-[11px] font-medium text-muted-foreground/50 tabular-nums flex-shrink-0">
             {formatTime(event.createdAt)}
           </span>
         </div>
@@ -659,7 +664,7 @@ function PopupContent({
             asChild
             size="sm"
             variant="outline"
-            className="w-full h-8 text-[10px] font-bold gap-1.5 border-border/40 hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all"
+            className="w-full h-8 text-[11px] font-semibold gap-1.5 border-border/40 hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all"
           >
             <a href={event.sourceUrl} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="w-3 h-3" />
@@ -673,14 +678,14 @@ function PopupContent({
           <div className="pt-2 border-t border-border/20">
             {showDeleteConfirm && canDelete ? (
               <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
-                <p className="text-[10px] font-bold text-destructive uppercase text-center tracking-widest">
+                <p className="text-[11px] font-semibold text-destructive uppercase text-center tracking-wide">
                   Confirm Deletion?
                 </p>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 h-8 rounded-lg text-[9px] font-bold uppercase"
+                    className="flex-1 h-8 rounded-lg text-[11px] font-semibold uppercase"
                     onClick={() => setShowDeleteConfirm(false)}
                     disabled={isDeleting}
                   >
@@ -689,7 +694,7 @@ function PopupContent({
                   <Button
                     variant="destructive"
                     size="sm"
-                    className="flex-1 h-8 rounded-lg text-[9px] font-bold uppercase"
+                    className="flex-1 h-8 rounded-lg text-[11px] font-semibold uppercase"
                     disabled={isDeleting}
                     onClick={async () => {
                       setIsDeleting(true);
@@ -708,7 +713,7 @@ function PopupContent({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 h-8 rounded-lg gap-1.5 text-[9px] font-bold uppercase hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all"
+                    className="flex-1 h-8 rounded-lg gap-1.5 text-[11px] font-semibold uppercase hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-all"
                     onClick={() => setShowDeleteConfirm(true)}
                   >
                     <Trash2 className="w-3 h-3" /> Delete
@@ -718,7 +723,7 @@ function PopupContent({
                   variant="outline"
                   size="sm"
                   className={cn(
-                    "h-8 rounded-lg gap-1.5 text-[9px] font-bold uppercase hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all",
+                    "h-8 rounded-lg gap-1.5 text-[11px] font-semibold uppercase hover:bg-primary/10 hover:text-primary hover:border-primary/20 transition-all",
                     canDelete ? "flex-1" : "w-full"
                   )}
                   onClick={() => onToggleEdit(true)}
