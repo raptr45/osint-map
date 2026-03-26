@@ -2,7 +2,7 @@ import { db } from "./db";
 import { pendingEvents } from "./schema";
 import { parseRawIntel } from "./ai-parser";
 import { pointSql } from "./map-logic";
-import { eq } from "drizzle-orm";
+import { eq, gte } from "drizzle-orm";
 import { logSystem } from "./logging";
 import { geocodeLocation } from "./geocoder";
 
@@ -16,7 +16,7 @@ export async function processIngestion(
 ) {
   if (!rawText || rawText.length < 10) return null;
 
-  // Deduplication check
+  // Layer 1: Exact deduplication by external ID
   if (metadata?.externalId) {
     const existing = await db.query.pendingEvents.findFirst({
       where: eq(pendingEvents.externalId, metadata.externalId),
@@ -26,6 +26,35 @@ export async function processIngestion(
       return existing.id;
     }
   }
+
+  // Layer 2: Fuzzy cross-source deduplication (2-hour window, 60% word overlap)
+  try {
+    const since2h = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const recentEvents = await db
+      .select({ id: pendingEvents.id, rawSource: pendingEvents.rawSource })
+      .from(pendingEvents)
+      .where(gte(pendingEvents.createdAt, since2h));
+
+    const incomingWords = new Set(
+      rawText.toLowerCase().split(/\s+/).filter((w) => w.length > 4)
+    );
+
+    for (const event of recentEvents) {
+      const existingWords = event.rawSource
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((w) => w.length > 4);
+      const overlap = existingWords.filter((w) => incomingWords.has(w)).length;
+      const similarity = overlap / Math.max(incomingWords.size, existingWords.length, 1);
+      if (similarity >= 0.6) {
+        console.log(`⏩ Fuzzy duplicate detected (${Math.round(similarity * 100)}% match). Skipping.`);
+        return event.id;
+      }
+    }
+  } catch (err) {
+    console.warn("⚠️ Fuzzy dedup check failed (non-critical):", (err as Error).message);
+  }
+
 
   // Add a small delay to prevent Gemini Free Tier rate limiting (15 RPM)
   await new Promise(resolve => setTimeout(resolve, 5000));

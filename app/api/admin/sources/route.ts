@@ -1,30 +1,63 @@
 import { db } from "@/lib/db";
-import { ingestSources } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { ingestSources, pendingEvents } from "@/lib/schema";
+import { eq, sql, gte } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/admin-check";
 
 export async function GET() {
   if (!(await isAdmin())) return new NextResponse("Unauthorized", { status: 401 });
+
   const sources = await db.query.ingestSources.findMany({
-    orderBy: (sources, { desc }) => [desc(sources.createdAt)]
+    orderBy: (sources, { desc }) => [desc(sources.createdAt)],
   });
-  return NextResponse.json(sources);
+
+  // Get signal counts (last 24h) per source
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const counts = await db
+    .select({
+      source: pendingEvents.source,
+      count: sql<number>`cast(count(*) as int)`,
+    })
+    .from(pendingEvents)
+    .where(gte(pendingEvents.createdAt, since))
+    .groupBy(pendingEvents.source);
+
+  const countMap = Object.fromEntries(counts.map((c) => [c.source, c.count]));
+
+  const enriched = sources.map((s) => ({
+    ...s,
+    signalsLast24h: countMap[s.value] ?? 0,
+  }));
+
+  return NextResponse.json(enriched);
 }
 
 export async function POST(req: Request) {
   if (!(await isAdmin())) return new NextResponse("Unauthorized", { status: 401 });
   const { type, value, name } = await req.json();
   if (!type || !value) return new NextResponse("Missing fields", { status: 400 });
-  
+
   const [newSource] = await db.insert(ingestSources).values({
     type,
     value,
     name: name || value,
-    isActive: true
+    isActive: true,
   }).returning();
-  
+
   return NextResponse.json(newSource);
+}
+
+export async function PATCH(req: Request) {
+  if (!(await isAdmin())) return new NextResponse("Unauthorized", { status: 401 });
+  const { id, isActive } = await req.json();
+  if (!id || typeof isActive !== "boolean") return new NextResponse("Missing fields", { status: 400 });
+
+  const [updated] = await db.update(ingestSources)
+    .set({ isActive })
+    .where(eq(ingestSources.id, id))
+    .returning();
+
+  return NextResponse.json(updated);
 }
 
 export async function DELETE(req: Request) {
@@ -32,7 +65,7 @@ export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   if (!id) return new NextResponse("Missing id", { status: 400 });
-  
+
   await db.delete(ingestSources).where(eq(ingestSources.id, id));
   return new NextResponse("Deleted", { status: 200 });
 }

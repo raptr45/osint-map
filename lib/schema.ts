@@ -58,7 +58,7 @@ export const systemLogs = pgTable("system_logs", {
 
 export const ingestSources = pgTable("ingest_sources", {
   id: uuid("id").primaryKey().defaultRandom(),
-  type: text("type").$type<"telegram" | "rss" | "custom">().notNull(),
+  type: text("type").$type<"telegram" | "rss" | "x" | "custom">().notNull(),
   value: text("value").notNull(), // username or URL
   name: text("name"), // display name
   isActive: boolean("is_active").default(true).notNull(),
