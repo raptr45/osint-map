@@ -2,6 +2,8 @@
 
 A high-performance, precision geopolitical intelligence platform. Built with **Next.js 16**, **PostGIS**, and **Gemini AI**.
 
+> 📚 **Looking for detailed documentation?** Check out the [Documentation Hub](docs/README.md) for Architecture, Database schemas, and AI Pipeline details.
+
 ---
 
 ## 🚀 Quick Start
@@ -41,11 +43,12 @@ For production, ensure these are set:
 ## 🛡️ Operational Features
 
 - **📍 Precision Mapping**: High-speed geospatial visualization via MapLibre GL.
-- **🤖 AI Extraction**: Automated situational reports and geolocation using Gemini 2.0 Flash or GPT-4o.
-- **📡 Reliable Ingest**: Heartbeat-monitored Telegram scraper with automated **media extraction** (images/video thumbnails).
-- **⏳ Historical Search**: Custom date range filtering for exploring past conflict cycles or specific operations.
-- **🕵️ Advanced Response Hub**: Full CRUD lifecycle for intelligence verification, coordination, and publication.
-- **🔐 Secure Uplink**: Hardened role-based access control (RBAC) via Better-Auth.
+- **🤖 Server-Side AI Extraction**: Automated situational reports, coordinate extraction, and translation using Gemini 2.0 Flash or GPT-4o.
+- **📡 Multi-Source Ingestion**: Dynamic, database-driven extraction nodes supporting **Telegram MTProto** and preparing for **X (Twitter)**.
+- **🔄 Fuzzy Deduplication**: Built-in cross-source similarity matching prevents identical events from flooding the map, even if posted on different platforms.
+- **⚡ Real-Time Streaming**: Server-Sent Events (SSE) stream new intelligence directly to the admin console without refreshing.
+- **🕵️ Tactical Admin Hub (V2)**: Full CRUD lifecycle for intelligence verification, collapsible sidebar navigation, live source metrics, and maintenance toggles.
+- **🔐 Secure Uplink**: Hardened role-based access control (RBAC) via Better-Auth (`admin`, `analyst`, `moderator`, `user`).
 
 ---
 

@@ -4,16 +4,22 @@ This document explains the core technical architecture of the OSINT Map project.
 
 ```mermaid
 sequenceDiagram
-    participant S as Intel Source (Telegram/RSS)
+    participant S as Targets (Telegram/X/RSS)
+    participant N as Extraction Nodes (ingest_sources)
     participant Q as Pending Queue (Postgres)
     participant AI as Gemini 2.0 Flash
-    participant M as Admin Moderation
+    participant SSE as Server-Sent Events (/stream)
+    participant M as Admin Moderation (V2)
     participant DB as Published Events (PostGIS)
     participant U as User MapView
 
-    S->>Q: Raw Intelligence Feed
+    N->>S: Monitor (MTProto / APIs)
+    S-->>N: Raw Intelligence Yield
+    N->>Q: Fuzzy Dedup + Insert
     Q->>AI: Trigger AI Parsing
-    AI-->>Q: Return Geolocation + Summary
+    AI-->>Q: Apply Geolocation + Metadata
+    Q->>SSE: Broadcast New Signal
+    SSE->>M: Live Notify (No Refresh)
     M->>Q: Expert Review/Correction
     M->>DB: Publish to Main Layer
     U->>DB: Viewport-based Fetch (BBox)
@@ -37,12 +43,13 @@ The map uses a **dual-filter** retrieval strategy:
 
 The `/api/events` endpoint combines PostGIS `ST_Intersects` with standard SQL timestamp filtering for ultra-fast viewport-based range queries.
 
-## 🛠️ 3. Strategic Intelligence Hub
-The Moderation Hub at `/admin/queue` is a full CRUD (Create, Read, Update, Delete) engine:
-- **Registry Tabs**: Separate views for `Pending Signals` (AI suggestions) and `Published Events` (Live map entries).
-- **Edit on Map**: Admins can re-geolocate any signal by clicking the integrated map during review.
-- **Source Verification**: All reports include automated **Telegram source links** and persistent media URLs (Vercel Blob Storage).
-- **Multi-AI Engine**: Real-time switching between **Gemini 2.0 Flash** and **GPT-4o** parsing.
+## 🛠️ 3. Tactical Response Hub (Admin V2)
+The internal command center handles intelligence ingestion lifecycle dynamically:
+- **Server-Sent Events (SSE)**: The UI auto-updates upon receiving new fully parsed intelligence directly from the backend stream (`/api/admin/stream`).
+- **Extraction Nodes**: Admins manage raw sources via `/admin/sources`, enabling/disabling targeted Telegram/X handles without codebase modifications.
+- **Fuzzy Deduplication**: The ingestor checks a 2-hour window of recent inputs to prevent duplicate processing of re-posted content.
+- **Visual Intelligence**: Automated preservation of images and video thumbnails via Vercel Blob proxy, displayed directly in the queue.
+- **Multi-AI Engine**: Fast real-time processing via **Gemini 2.0 Flash**.
 
 ## 🔐 4. Access Control
 - **RBAC**: Role-Based Access Control is enforced via **Better-Auth**.

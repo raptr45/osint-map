@@ -16,13 +16,18 @@ stateDiagram-v2
 > [!IMPORTANT]
 > The coordinates suggested by the AI are **guesses** based on semantic analysis. They must always be verified by an admin in the Moderation Queue before being committed to the public GIS layer.
 
-## 📡 1. Raw Ingestion
-The system is designed to swallow raw, unstructured text from various sources:
+## 📡 1. Multi-Source Target Ingestion
+The system is designed to swallow raw, unstructured text from dynamic extraction nodes managed via the Admin Hub (`/admin/sources`):
 - **Telegram Channels** (MTProto Scrapers)
-- **RSS Feeds**
-- **Manual Input**
+- **X (Twitter)** (API / Playwright Scraper scaffolding)
+- **REST/Manual API** (Staff manual entry)
 
-Inputs are hit first in the `Pending Queue`, preserving the original raw text/source.
+Inputs hit the `.ingest_sources` registry. We pull the feeds constantly over long-polling or polling sockets.
+
+### 🛡️ Cross-Source Fuzzy Deduplication
+Before an event reaches the AI parser, it passes through 2 deduplication layers:
+1. **Exact Matches**: Skips if the exact `externalId` (e.g. `tg_osintdefender_1048`) is already logged.
+2. **Fuzzy Context Matches**: Scans the last 2 hours of signals using `pg_trgm` and basic word overlap scoring. If an incoming message shares >60% vocabulary with an existing event (e.g. from a different channel/X), it is skipped.
 
 ## 🧠 2. AI Parsing (Gemini-2.0-Flash)
 The `lib/ai-parser.ts` module uses Google's Gemini models to perform "Named Entity Recognition" and "Geolocation".
@@ -40,11 +45,12 @@ The `lib/ai-parser.ts` module uses Google's Gemini models to perform "Named Enti
   }
   ```
 
-## 🛠️ 3. The Moderation Queue
-Before an event is "Published" to the global map, it must pass a human check:
-1. **Verification**: Admins see the raw text alongside the AI-suggested location.
-2. **Adjustment**: If the AI is slightly off, admins can click the map to re-pin the target.
-3. **Publication**: Once approved, the record is moved from `pending_events` to `published_events` and PostGIS geometry is generated.
+## 🛠️ 3. The Moderation Queue & SSE Streams
+Before an event is "Published" to the global map, it hits the Tactical Response Hub:
+1. **Real-Time Delivery**: The command center is plugged directly into a **Server-Sent Events (SSE)** endpoint (`/api/admin/stream`). When the AI parser finishes a payload, the UI populates the new event instantly without a page refresh.
+2. **Verification**: Admins see the raw text, visual evidence (if extracted), and source verification link next to the AI-suggested map pin.
+3. **Adjustment**: Admins can correct the AI, drag the pin, or rewrite the title.
+4. **Publication**: Once approved, the record transfers to the public PostGIS geometry table (`published_events`).
 
 ## 🚀 4. How to Test
 

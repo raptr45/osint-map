@@ -10,7 +10,7 @@ Welcome to the **OSINT Map** technical documentation center. This repository ser
 | :--------------------------------------- | :---------------------------------------------------------- | :--------------------- |
 | **[Architecture](architecture.md)**      | System design, GIS layers, and sovereign hosting.           | Architects / Lead devs |
 | **[Database Schema](database.md)**       | PostGIS modeling, ER diagrams, and spatial logic.           | Backend / DBAs         |
-| **[Intelligence Pipeline](pipeline.md)** | AI extraction flow (Gemini), raw ingestion, and moderation. | DevOps / Operators     |
+| **[Intelligence Pipeline](pipeline.md)** | Tactical Response Hub, AI extraction flow (Gemini), Multi-Source Ingestion (Telegram/X), and moderation. | DevOps / Operators     |
 
 ---
 
