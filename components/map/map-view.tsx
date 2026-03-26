@@ -28,7 +28,21 @@ import Map, {
   ScaleControl,
   type MapRef,
 } from "react-map-gl/maplibre";
+import maplibregl from "maplibre-gl";
 import useSWR from "swr";
+
+// Enable proper Arabic/Hebrew/RTL text rendering on the map
+// Must guard for SSR (no window) and duplicate calls
+if (typeof window !== "undefined") {
+  try {
+    maplibregl.setRTLTextPlugin(
+      "https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js",
+      false // eager load — download immediately
+    );
+  } catch (_) {
+    // Plugin already loaded (hot reload), safe to ignore
+  }
+}
 
 const SCROLLBAR_STYLES = `
   .custom-scrollbar::-webkit-scrollbar {
