@@ -329,11 +329,11 @@ export default function ModerationQueue() {
             <ShieldCheck className="w-5 h-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-sm font-black tracking-widest uppercase font-display leading-none flex items-center gap-2">
+            <h1 className="text-sm font-bold tracking-wide uppercase font-display leading-none flex items-center gap-2">
               Tactical Response Hub
-              <Badge variant="outline" className="h-5 text-xs font-black border-primary/30 text-primary bg-primary/5 uppercase">Admin v2</Badge>
+              <Badge variant="outline" className="h-5 text-xs font-bold border-primary/30 text-primary bg-primary/5 uppercase">Admin v2</Badge>
             </h1>
-            <span className="text-xs font-black text-muted-foreground/60 uppercase tracking-[0.2em] leading-none mt-1 opacity-80">Geospatial Intelligence (MOD)</span>
+            <span className="text-xs font-bold text-muted-foreground/60 uppercase tracking-wide leading-none mt-1 opacity-80">Geospatial Intelligence (MOD)</span>
           </div>
         </div>
 
@@ -341,13 +341,13 @@ export default function ModerationQueue() {
           {/* Signals count */}
           <div className="flex items-center gap-2 bg-secondary/30 px-3 py-1.5 rounded-xl border border-border/40">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-            <span className="text-xs font-black text-foreground/80">{queue?.length || 0} pending · {published?.length || 0} published</span>
+            <span className="text-xs font-bold text-foreground/80">{queue?.length || 0} pending · {published?.length || 0} published</span>
           </div>
           {/* AI Provider */}
           <div className="flex items-center gap-1 bg-secondary/20 p-1 rounded-xl border border-border/30">
             {(["gemini", "openai"] as const).map(p => (
               <button key={p} onClick={() => handleProviderSwitch(p)} disabled={isSwitchingProvider}
-                className={cn("flex items-center gap-1.5 px-3 h-7 rounded-lg text-xs font-black uppercase tracking-widest transition-all",
+                className={cn("flex items-center gap-1.5 px-3 h-7 rounded-lg text-xs font-bold uppercase tracking-wide transition-all",
                   settings?.provider === p ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground")}>
                 {isSwitchingProvider && settings?.provider !== p ? <Loader2 className="w-3 h-3 animate-spin" /> : <Brain className="w-3 h-3" />}
                 {p === "gemini" ? "Gemini" : "GPT-4o"}
@@ -357,18 +357,18 @@ export default function ModerationQueue() {
           </div>
           {canPurge && (
             <Button variant="outline" size="sm" onClick={() => setShowClearDialog(true)}
-              className="gap-2 h-9 rounded-md px-4 text-xs font-black uppercase text-destructive/80 border-destructive/20 hover:bg-destructive/10 bg-destructive/5">
+              className="gap-2 h-9 rounded-md px-4 text-xs font-bold uppercase text-destructive/80 border-destructive/20 hover:bg-destructive/10 bg-destructive/5">
               <Trash2 className="w-3.5 h-3.5" /> Purge Queue
             </Button>
           )}
           {canAddCustomEvent && (
             <Button variant="outline" size="sm" onClick={() => setShowManualDialog(true)}
-              className="gap-2 h-9 rounded-md px-4 text-xs font-black uppercase text-primary/80 border-primary/20 hover:bg-primary/10 bg-primary/5">
+              className="gap-2 h-9 rounded-md px-4 text-xs font-bold uppercase text-primary/80 border-primary/20 hover:bg-primary/10 bg-primary/5">
               <Edit3 className="w-3.5 h-3.5" /> Manual Intel
             </Button>
           )}
           <Button variant="outline" size="sm" onClick={() => { mutate(); mutatePublished(); }}
-            className="gap-2 h-9 rounded-md px-4 text-xs font-black uppercase bg-secondary/20 hover:bg-secondary/40">
+            className="gap-2 h-9 rounded-md px-4 text-xs font-bold uppercase bg-secondary/20 hover:bg-secondary/40">
             <RefreshCcw className="w-3.5 h-3.5" /> Sync Ops
           </Button>
         </div>
@@ -381,12 +381,12 @@ export default function ModerationQueue() {
           { key: "published", label: "Published Events", count: published?.length, icon: CheckCircle2 },
         ] as const).map(({ key, label, count, icon: Icon }) => (
           <button key={key} onClick={() => setActiveTab(key)}
-            className={cn("flex items-center gap-2 px-4 h-8 rounded-lg text-xs font-black uppercase tracking-widest transition-all",
+            className={cn("flex items-center gap-2 px-4 h-8 rounded-lg text-xs font-bold uppercase tracking-wide transition-all",
               activeTab === key ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:bg-secondary/40 hover:text-foreground")}>
             <Icon className="w-3 h-3" />
             {label}
             {count !== undefined && (
-              <span className={cn("px-1.5 py-0.5 rounded-full text-[9px] font-black",
+              <span className={cn("px-1.5 py-0.5 rounded-full text-[11px] font-bold",
                 activeTab === key ? "bg-primary-foreground/20 text-primary-foreground" : "bg-secondary text-muted-foreground")}>
                 {count}
               </span>
@@ -410,11 +410,11 @@ export default function ModerationQueue() {
                 {/* Sort bar (pending only) */}
                 {activeTab === "pending" && (
                   <div className="p-3 border-b border-border/10 flex items-center justify-between bg-background/20 shrink-0">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">Sort</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground/50">Sort</span>
                     <div className="flex gap-1">
                       {(["date", "source"] as const).map(s => (
                         <button key={s} onClick={() => setSortBy(s)}
-                          className={cn("px-2 py-0.5 rounded text-[9px] font-black uppercase transition-all",
+                          className={cn("px-2 py-0.5 rounded text-[11px] font-bold uppercase transition-all",
                             sortBy === s ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary")}>
                           {s}
                         </button>
@@ -431,10 +431,10 @@ export default function ModerationQueue() {
                       {!isLoading && Object.entries(groupedQueue).map(([date, items]) => (
                         <div key={date} className="space-y-2">
                           <div className="sticky top-0 z-10 bg-background/60 backdrop-blur-xl py-1.5 px-1 border-b border-border/20 flex items-center justify-between">
-                            <span className="text-[10px] font-black tracking-widest uppercase text-primary/80 flex items-center gap-1.5">
+                            <span className="text-[11px] font-bold tracking-wide uppercase text-primary/80 flex items-center gap-1.5">
                               <Activity className="w-3 h-3" />{date}
                             </span>
-                            <Badge variant="outline" className="h-4 text-[9px] border-border/30 opacity-50 px-1">{items.length} MSG</Badge>
+                            <Badge variant="outline" className="h-4 text-[11px] border-border/30 opacity-50 px-1">{items.length} MSG</Badge>
                           </div>
                           {items.map(item => (
                             <div key={item.id}
@@ -442,7 +442,7 @@ export default function ModerationQueue() {
                                 selectedPendingId === item.id ? "bg-primary/10 border-primary/40 ring-1 ring-primary/20" : "bg-background/40 hover:bg-secondary/30 border-border/20")}
                               onClick={() => setSelectedPendingId(item.id)}>
                               <div className="flex items-start justify-between gap-2 mb-1.5">
-                                <h3 className={cn("font-black text-xs tracking-tight line-clamp-2 flex-1 uppercase leading-snug",
+                                <h3 className={cn("font-bold text-xs tracking-tight line-clamp-2 flex-1 uppercase leading-snug",
                                   selectedPendingId === item.id ? "text-primary" : item.status === "failed" ? "text-destructive/80" : item.suggestedTitle ? "text-foreground" : "text-muted-foreground")}>
                                   {item.status === "processing" ? "PROBING SIGNAL..." : item.status === "failed" ? "ENRICHMENT FAILED" : item.suggestedTitle || "ANALYZING..."}
                                 </h3>
@@ -453,8 +453,8 @@ export default function ModerationQueue() {
                               <p className="text-[11px] text-muted-foreground/60 line-clamp-2 leading-relaxed">{item.rawSource}</p>
                               <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-border/10">
                                 <div className="flex items-center gap-1.5">
-                                  <span className="text-[10px] font-black text-muted-foreground/40 tabular-nums">{formatRelativeTime(item.sourceCreatedAt || item.createdAt)}</span>
-                                  {item.source && <Badge variant="outline" className="h-3.5 text-[9px] px-1.5 font-black border-primary/20 text-primary bg-primary/5">{item.source}</Badge>}
+                                  <span className="text-[11px] font-bold text-muted-foreground/40 tabular-nums">{formatRelativeTime(item.sourceCreatedAt || item.createdAt)}</span>
+                                  {item.source && <Badge variant="outline" className="h-3.5 text-[11px] px-1.5 font-bold border-primary/20 text-primary bg-primary/5">{item.source}</Badge>}
                                   {item.imageUrl && <ImageIcon className="w-2.5 h-2.5 text-muted-foreground/30" />}
                                   {item.sourceUrl && <Globe className="w-2.5 h-2.5 text-primary/40" />}
                                 </div>
@@ -467,7 +467,7 @@ export default function ModerationQueue() {
                       {!isLoading && (!queue || queue.length === 0) && (
                         <div className="flex flex-col items-center justify-center py-24 opacity-20">
                           <Zap className="w-8 h-8 mb-3" />
-                          <p className="text-[11px] font-black uppercase tracking-widest">Sector Neutral</p>
+                          <p className="text-[11px] font-bold uppercase tracking-wide">Sector Neutral</p>
                         </div>
                       )}
                     </>
@@ -480,10 +480,10 @@ export default function ModerationQueue() {
                       {!isLoadingPublished && Object.entries(groupedPublished).map(([date, items]) => (
                         <div key={date} className="space-y-2">
                           <div className="sticky top-0 z-10 bg-background/60 backdrop-blur-xl py-1.5 px-1 border-b border-border/20 flex items-center justify-between">
-                            <span className="text-[10px] font-black tracking-widest uppercase text-emerald-500/80 flex items-center gap-1.5">
+                            <span className="text-[11px] font-bold tracking-wide uppercase text-emerald-500/80 flex items-center gap-1.5">
                               <CheckCircle2 className="w-3 h-3" />{date}
                             </span>
-                            <Badge variant="outline" className="h-4 text-[9px] border-border/30 opacity-50 px-1">{items.length}</Badge>
+                            <Badge variant="outline" className="h-4 text-[11px] border-border/30 opacity-50 px-1">{items.length}</Badge>
                           </div>
                           {items.map(item => (
                             <div key={item.id}
@@ -491,12 +491,12 @@ export default function ModerationQueue() {
                                 selectedPublishedId === item.id ? "bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/20" : "bg-background/40 hover:bg-secondary/30 border-border/20")}
                               onClick={() => setSelectedPublishedId(item.id)}>
                               <div className="flex items-start justify-between gap-2 mb-1.5">
-                                <h3 className="font-black text-xs tracking-tight line-clamp-2 flex-1 uppercase leading-snug text-foreground">{item.title}</h3>
-                                <span className={cn("text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase border shrink-0", severityColor(item.severity))}>{item.severity}</span>
+                                <h3 className="font-bold text-xs tracking-tight line-clamp-2 flex-1 uppercase leading-snug text-foreground">{item.title}</h3>
+                                <span className={cn("text-[11px] px-1.5 py-0.5 rounded-full font-bold uppercase border shrink-0", severityColor(item.severity))}>{item.severity}</span>
                               </div>
                               <p className="text-[11px] text-muted-foreground/60 line-clamp-1 leading-relaxed">{item.description}</p>
                               <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-border/10">
-                                <span className="text-[10px] font-black text-muted-foreground/40 tabular-nums">{formatRelativeTime(item.createdAt)}</span>
+                                <span className="text-[11px] font-bold text-muted-foreground/40 tabular-nums">{formatRelativeTime(item.createdAt)}</span>
                                 <div className="flex items-center gap-1.5">
                                   {item.imageUrl && <ImageIcon className="w-2.5 h-2.5 text-muted-foreground/30" />}
                                   {item.sourceUrl && <Globe className="w-2.5 h-2.5 text-primary/40" />}
@@ -510,7 +510,7 @@ export default function ModerationQueue() {
                       {!isLoadingPublished && (!published || published.length === 0) && (
                         <div className="flex flex-col items-center justify-center py-24 opacity-20">
                           <CheckCircle2 className="w-8 h-8 mb-3" />
-                          <p className="text-[11px] font-black uppercase tracking-widest">No Published Events</p>
+                          <p className="text-[11px] font-bold uppercase tracking-wide">No Published Events</p>
                         </div>
                       )}
                     </>
@@ -540,11 +540,11 @@ export default function ModerationQueue() {
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <div className={cn("w-2.5 h-2.5 rounded-full", selectedPending.status === "failed" ? "bg-destructive" : "bg-primary shadow-[0_0_12px_rgba(var(--primary),0.8)]")} />
-                                  <h2 className="text-xs font-black uppercase tracking-widest text-foreground/70">
+                                  <h2 className="text-xs font-bold uppercase tracking-wide text-foreground/70">
                                     {selectedPending.status === "failed" ? "Enrichment Failure" : "Enrichment Protocol"}
                                   </h2>
                                 </div>
-                                {selectedPending.status === "failed" && <Badge variant="destructive" className="animate-pulse text-xs font-black uppercase">AI Failed</Badge>}
+                                {selectedPending.status === "failed" && <Badge variant="destructive" className="animate-pulse text-xs font-bold uppercase">AI Failed</Badge>}
                               </div>
 
                               {selectedPending.status === "failed" && (
@@ -555,31 +555,31 @@ export default function ModerationQueue() {
                               )}
 
                               <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Assigned Title</label>
-                                <input className="w-full bg-secondary/20 border border-border/30 rounded-xl p-3.5 text-sm font-black focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+                                <label className="text-[11px] font-bold uppercase text-muted-foreground/60 tracking-wide">Assigned Title</label>
+                                <input className="w-full bg-secondary/20 border border-border/30 rounded-xl p-3.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
                                   value={editTitle} onChange={e => setEditTitle(e.target.value)} placeholder="Pending designation..." />
                               </div>
 
                               <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Summary SITREP</label>
-                                <textarea className="w-full bg-secondary/20 border border-border/30 rounded-xl p-3.5 text-sm h-36 resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all leading-relaxed font-medium"
+                                <label className="text-[11px] font-bold uppercase text-muted-foreground/60 tracking-wide">Summary SITREP</label>
+                                <textarea className="w-full bg-secondary/20 border border-border/30 rounded-xl p-3.5 text-sm h-36 resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all leading-relaxed font-normal"
                                   value={editDesc} onChange={e => setEditDesc(e.target.value)} placeholder="Intelligence summary..." />
                               </div>
 
                               <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                  <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest flex items-center gap-1.5">
+                                  <label className="text-[11px] font-bold uppercase text-muted-foreground/60 tracking-wide flex items-center gap-1.5">
                                     <Link2 className="w-3 h-3" /> Source URL
                                   </label>
                                   <input className="w-full bg-secondary/20 border border-border/30 rounded-xl px-3.5 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
                                     value={editSourceUrl} onChange={e => setEditSourceUrl(e.target.value)} placeholder="https://t.me/..." />
                                 </div>
                                 <div className="space-y-1.5">
-                                  <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Severity</label>
+                                  <label className="text-[11px] font-bold uppercase text-muted-foreground/60 tracking-wide">Severity</label>
                                   <div className="flex gap-1.5 flex-wrap">
                                     {SEVERITY_OPTIONS.map(s => (
                                       <button key={s} onClick={() => setEditSeverity(s)}
-                                        className={cn("px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all",
+                                        className={cn("px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase border transition-all",
                                           editSeverity === s ? severityColor(s) : "border-border/30 text-muted-foreground hover:border-border/50")}>
                                         {s}
                                       </button>
@@ -591,15 +591,15 @@ export default function ModerationQueue() {
                               {/* Raw Source */}
                               <div className="bg-secondary/10 border border-border/30 rounded-2xl p-6 space-y-3">
                                 <div className="flex items-center justify-between">
-                                  <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Signal Source Content</label>
+                                  <label className="text-[11px] font-bold uppercase text-muted-foreground/60 tracking-wide">Signal Source Content</label>
                                   <div className="flex items-center gap-2">
                                     {(selectedPending.sourceUrl || editSourceUrl) && (
                                       <a href={selectedPending.sourceUrl || editSourceUrl} target="_blank" rel="noopener noreferrer"
-                                        className="flex items-center gap-1 text-xs font-black border border-primary/20 text-primary bg-primary/5 hover:bg-primary/10 px-2 py-0.5 rounded-full transition-all">
+                                        className="flex items-center gap-1 text-xs font-bold border border-primary/20 text-primary bg-primary/5 hover:bg-primary/10 px-2 py-0.5 rounded-full transition-all">
                                         <ExternalLink className="w-3 h-3" /> Open Source
                                       </a>
                                     )}
-                                    <Badge variant="outline" className="text-xs font-black border-emerald-500/20 text-emerald-500 bg-emerald-500/5">ENCRYPTED</Badge>
+                                    <Badge variant="outline" className="text-xs font-bold border-emerald-500/20 text-emerald-500 bg-emerald-500/5">ENCRYPTED</Badge>
                                   </div>
                                 </div>
                                 <p className="text-xs leading-relaxed text-muted-foreground font-medium italic">&ldquo;{selectedPending.rawSource}&rdquo;</p>
@@ -609,7 +609,7 @@ export default function ModerationQueue() {
                                     <img src={selectedPending.imageUrl} alt="Signal Visual" className="w-full max-h-48 object-cover" />
                                     <div className="p-2 bg-black/20 flex items-center gap-2">
                                       <ImageIcon className="w-3 h-3 text-muted-foreground" />
-                                      <a href={selectedPending.imageUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] font-black text-primary hover:underline">Full Resolution</a>
+                                      <a href={selectedPending.imageUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] font-bold text-primary hover:underline">Full Resolution</a>
                                     </div>
                                   </div>
                                 )}
@@ -623,29 +623,29 @@ export default function ModerationQueue() {
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
-                                  <h2 className="text-xs font-black uppercase tracking-widest text-foreground/70">Event Editor</h2>
+                                  <h2 className="text-xs font-bold uppercase tracking-wide text-foreground/70">Event Editor</h2>
                                 </div>
-                                <Badge variant="outline" className="text-xs font-black border-emerald-500/30 text-emerald-500 bg-emerald-500/5">PUBLISHED</Badge>
+                                <Badge variant="outline" className="text-xs font-bold border-emerald-500/30 text-emerald-500 bg-emerald-500/5">PUBLISHED</Badge>
                               </div>
 
                               <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Title</label>
-                                <input className="w-full bg-secondary/20 border border-border/30 rounded-xl p-3.5 text-sm font-black focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all"
+                                <label className="text-[11px] font-bold uppercase text-muted-foreground/60 tracking-wide">Title</label>
+                                <input className="w-full bg-secondary/20 border border-border/30 rounded-xl p-3.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all"
                                   value={pubTitle} onChange={e => setPubTitle(e.target.value)} />
                               </div>
 
                               <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Description</label>
+                                <label className="text-[11px] font-bold uppercase text-muted-foreground/60 tracking-wide">Description</label>
                                 <textarea className="w-full bg-secondary/20 border border-border/30 rounded-xl p-3.5 text-sm h-28 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all leading-relaxed font-medium"
                                   value={pubDesc} onChange={e => setPubDesc(e.target.value)} />
                               </div>
 
                               <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Severity</label>
+                                <label className="text-[11px] font-bold uppercase text-muted-foreground/60 tracking-wide">Severity</label>
                                 <div className="flex gap-1.5 flex-wrap">
                                   {SEVERITY_OPTIONS.map(s => (
                                     <button key={s} onClick={() => setPubSeverity(s)}
-                                      className={cn("px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all",
+                                      className={cn("px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase border transition-all",
                                         pubSeverity === s ? severityColor(s) : "border-border/30 text-muted-foreground hover:border-border/50")}>
                                       {s}
                                     </button>
@@ -654,7 +654,7 @@ export default function ModerationQueue() {
                               </div>
 
                               <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest flex items-center gap-1.5">
+                                <label className="text-[11px] font-bold uppercase text-muted-foreground/60 tracking-wide flex items-center gap-1.5">
                                   <Link2 className="w-3 h-3" /> Source URL
                                 </label>
                                 <div className="flex gap-2">
@@ -670,7 +670,7 @@ export default function ModerationQueue() {
                               </div>
 
                               <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest flex items-center gap-1.5">
+                                <label className="text-[11px] font-bold uppercase text-muted-foreground/60 tracking-wide flex items-center gap-1.5">
                                   <ImageIcon className="w-3 h-3" /> Image URL
                                 </label>
                                 <div className="flex gap-2">
@@ -691,7 +691,7 @@ export default function ModerationQueue() {
                                 )}
                               </div>
 
-                              <div className="text-[10px] text-muted-foreground/40 font-mono pt-2 border-t border-border/10">
+                              <div className="text-[11px] text-muted-foreground/40 font-mono pt-2 border-t border-border/10">
                                 ID: {selectedPublished.id.slice(0,8)}... · Published {formatRelativeTime(selectedPublished.createdAt)} · Updated {formatRelativeTime(selectedPublished.updatedAt)}
                               </div>
                             </>
@@ -705,15 +705,15 @@ export default function ModerationQueue() {
                               {canModerate && (
                                 <>
                                   <Button variant="outline" onClick={handleReprocess} disabled={isReprocessing || isPublishing}
-                                    className="h-10 px-5 rounded-xl text-xs font-black uppercase gap-2 hover:bg-primary/10 hover:border-primary/40 transition-all">
+                                    className="h-10 px-5 rounded-xl text-xs font-bold uppercase gap-2 hover:bg-primary/10 hover:border-primary/40 transition-all">
                                     {isReprocessing ? <Loader2 className="animate-spin w-3.5 h-3.5" /> : <Zap className="w-3.5 h-3.5" />} Rescan
                                   </Button>
                                   <Button variant="outline" onClick={handleDeletePending} disabled={isPublishing}
-                                    className="h-10 px-5 rounded-xl text-xs font-black uppercase gap-2 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all">
+                                    className="h-10 px-5 rounded-xl text-xs font-bold uppercase gap-2 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all">
                                     <X className="w-3.5 h-3.5" /> Delete
                                   </Button>
                                   <Button onClick={handlePublish} disabled={isPublishing || !editPos}
-                                    className="h-10 px-7 rounded-xl text-sm font-black uppercase gap-2 shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                                    className="h-10 px-7 rounded-xl text-sm font-bold uppercase gap-2 shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all">
                                     {isPublishing ? <Loader2 className="animate-spin w-4 h-4" /> : <ShieldCheck className="w-4 h-4 stroke-[3]" />} Authorize
                                   </Button>
                                 </>
@@ -726,12 +726,12 @@ export default function ModerationQueue() {
                                 <>
                                   {canPurge && (
                                     <Button variant="outline" onClick={() => setShowDeletePublishedDialog(true)} disabled={isPublishing}
-                                      className="h-10 px-5 rounded-xl text-xs font-black uppercase gap-2 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all">
+                                      className="h-10 px-5 rounded-xl text-xs font-bold uppercase gap-2 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all">
                                       <Trash2 className="w-3.5 h-3.5" /> Unpublish
                                     </Button>
                                   )}
                                   <Button onClick={handleSavePublished} disabled={isSaving}
-                                    className="h-10 px-7 rounded-xl text-sm font-black uppercase gap-2 bg-emerald-600 hover:bg-emerald-500 shadow-xl shadow-emerald-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                                    className="h-10 px-7 rounded-xl text-sm font-bold uppercase gap-2 bg-emerald-600 hover:bg-emerald-500 shadow-xl shadow-emerald-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
                                     {isSaving ? <Loader2 className="animate-spin w-4 h-4" /> : <Edit3 className="w-4 h-4" />} Save Changes
                                   </Button>
                                 </>
@@ -740,7 +740,7 @@ export default function ModerationQueue() {
                           )}
                           {/* ID display */}
                           <div className="flex flex-col items-start gap-0.5 p-2 px-3.5 rounded-xl border border-border/10 bg-secondary/5">
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">Intel ID</span>
+                            <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground/40">Intel ID</span>
                             <span className="text-[11px] font-mono text-muted-foreground/60">
                               {(activeTab === "pending" ? selectedPending?.id : selectedPublished?.id)?.slice(0, 18)}...
                             </span>
@@ -755,7 +755,7 @@ export default function ModerationQueue() {
                     <ResizablePanel defaultSize="40" minSize="20" id="queue-map-panel">
                       <div className="w-full h-full flex flex-col bg-card/5">
                         <div className="p-6 border-b border-border/20 bg-background/30 backdrop-blur-md space-y-3">
-                          <h3 className="text-xs font-black uppercase tracking-[0.4em] font-display">Spatial Correlator</h3>
+                          <h3 className="text-xs font-bold uppercase tracking-wide font-display">Spatial Correlator</h3>
                           <div className="relative group">
                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/40 group-focus-within:text-primary transition-colors" />
                             <input type="text" placeholder="SEARCH TARGET (E.G. PENTAGON)..."
@@ -769,15 +769,15 @@ export default function ModerationQueue() {
                                   mapRef.current?.flyTo({ center: [lng, lat], zoom: 15 });
                                 }
                               }}
-                              className="w-full bg-background/60 border border-border/40 rounded-xl pl-10 pr-4 h-10 text-xs font-black uppercase tracking-tight focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-muted-foreground/40" />
+                              className="w-full bg-background/60 border border-border/40 rounded-xl pl-10 pr-4 h-10 text-xs font-bold uppercase tracking-tight focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-muted-foreground/40" />
                           </div>
                           <div className="flex items-center justify-between">
                             {mapClickPos ? (
-                              <span className="text-xs font-mono text-emerald-500 font-black flex items-center gap-2">
+                              <span className="text-xs font-mono text-emerald-500 font-bold flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> SYSTEM_LOCK_STABLE
                               </span>
                             ) : (
-                              <span className="text-xs font-mono text-destructive font-black flex items-center gap-2 animate-pulse">
+                              <span className="text-xs font-mono text-destructive font-bold flex items-center gap-2 animate-pulse">
                                 <AlertTriangle className="w-3 h-3" /> NO_COORDINATES
                               </span>
                             )}
@@ -804,7 +804,7 @@ export default function ModerationQueue() {
                           </Map>
                           {/* Recalibrate button */}
                           <div className="absolute top-4 left-4 right-4 z-10 flex flex-col gap-2">
-                            <Card className="bg-background/80 backdrop-blur-2xl border-primary/20 p-2.5 text-center text-[10px] font-black tracking-[0.3em] uppercase border-dashed border-2">
+                            <Card className="bg-background/80 backdrop-blur-2xl border-primary/20 p-2.5 text-center text-[11px] font-bold tracking-wide uppercase border-dashed border-2">
                               Point of Interest Selection Phase
                             </Card>
                             {(() => {
@@ -813,7 +813,7 @@ export default function ModerationQueue() {
                               return suggLng && suggLat ? (
                                 <Button variant="outline" size="sm"
                                   onClick={() => { mapRef.current?.flyTo({ center: [suggLng, suggLat], zoom: 12 }); setMapClickPos({ lng: suggLng, lat: suggLat }); }}
-                                  className="bg-primary/10 backdrop-blur-2xl border-primary/40 h-9 text-xs font-black uppercase gap-2 hover:bg-primary/20 text-primary">
+                                  className="bg-primary/10 backdrop-blur-2xl border-primary/40 h-9 text-xs font-bold uppercase gap-2 hover:bg-primary/20 text-primary">
                                   <MapPin className="w-3 h-3" /> Recalibrate to Suggestion
                                 </Button>
                               ) : null;
@@ -832,7 +832,7 @@ export default function ModerationQueue() {
                         <Activity className="w-10 h-10 text-primary/40 animate-pulse" />
                       </div>
                     </div>
-                    <h3 className="text-2xl font-black font-display uppercase tracking-tight mb-3 flex items-center gap-3 text-foreground/90">
+                    <h3 className="text-2xl font-bold font-display uppercase tracking-tight mb-3 flex items-center gap-3 text-foreground/90">
                       <span className="opacity-20">{"///"}</span>
                       {activeTab === "pending" ? "Silent Registry" : "Select an Event"}
                       <span className="opacity-20">{"///"}</span>
@@ -857,14 +857,14 @@ export default function ModerationQueue() {
             <div className="mx-auto w-14 h-14 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center">
               <AlertCircle className="w-7 h-7 text-destructive animate-bounce" />
             </div>
-            <DialogTitle className="text-xl font-black uppercase tracking-tight font-display">System Purge Authorization</DialogTitle>
+            <DialogTitle className="text-xl font-bold uppercase tracking-tight font-display">System Purge Authorization</DialogTitle>
             <DialogDescription className="text-muted-foreground/60 font-medium leading-relaxed">
               EXTREME CAUTION: This will permanently erase all unverified intelligence from the moderation queue. Data recovery is not possible.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-col sm:flex-row gap-3 pt-5 border-t border-border/20 mt-5">
-            <Button variant="ghost" onClick={() => setShowClearDialog(false)} className="flex-1 h-11 rounded-xl text-xs font-black uppercase">Abort Purge</Button>
-            <Button variant="destructive" onClick={handleClearAll} disabled={isPublishing} className="flex-1 h-11 rounded-xl text-xs font-black uppercase shadow-xl shadow-destructive/20">
+            <Button variant="ghost" onClick={() => setShowClearDialog(false)} className="flex-1 h-11 rounded-xl text-xs font-bold uppercase">Abort Purge</Button>
+            <Button variant="destructive" onClick={handleClearAll} disabled={isPublishing} className="flex-1 h-11 rounded-xl text-xs font-bold uppercase shadow-xl shadow-destructive/20">
               {isPublishing ? <Loader2 className="animate-spin" /> : "Confirm Wipe"}
             </Button>
           </DialogFooter>
@@ -878,14 +878,14 @@ export default function ModerationQueue() {
             <div className="mx-auto w-14 h-14 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center">
               <Trash2 className="w-7 h-7 text-destructive" />
             </div>
-            <DialogTitle className="text-xl font-black uppercase tracking-tight font-display">Unpublish Event</DialogTitle>
+            <DialogTitle className="text-xl font-bold uppercase tracking-tight font-display">Unpublish Event</DialogTitle>
             <DialogDescription className="text-muted-foreground/60 font-medium leading-relaxed">
               This will permanently remove <strong>&ldquo;{selectedPublished?.title}&rdquo;</strong> from the public map. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-col sm:flex-row gap-3 pt-5 border-t border-border/20 mt-5">
-            <Button variant="ghost" onClick={() => setShowDeletePublishedDialog(false)} className="flex-1 h-11 rounded-xl text-xs font-black uppercase">Cancel</Button>
-            <Button variant="destructive" onClick={handleDeletePublished} disabled={isPublishing} className="flex-1 h-11 rounded-xl text-xs font-black uppercase">
+            <Button variant="ghost" onClick={() => setShowDeletePublishedDialog(false)} className="flex-1 h-11 rounded-xl text-xs font-bold uppercase">Cancel</Button>
+            <Button variant="destructive" onClick={handleDeletePublished} disabled={isPublishing} className="flex-1 h-11 rounded-xl text-xs font-bold uppercase">
               {isPublishing ? <Loader2 className="animate-spin" /> : "Confirm Unpublish"}
             </Button>
           </DialogFooter>
@@ -901,7 +901,7 @@ export default function ModerationQueue() {
                 <Edit3 className="w-7 h-7 text-primary shadow-primary" />
               </div>
               <div>
-                <DialogTitle className="text-2xl font-black uppercase tracking-tight font-display">Intelligence Ingestion</DialogTitle>
+                <DialogTitle className="text-2xl font-bold uppercase tracking-tight font-display">Intelligence Ingestion</DialogTitle>
                 <DialogDescription className="text-muted-foreground/60 font-medium text-xs tracking-wide uppercase">Manual Manual Signal Injection Protocol</DialogDescription>
               </div>
             </div>
@@ -909,22 +909,22 @@ export default function ModerationQueue() {
 
           <div className="space-y-6 pt-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest pl-1">Raw Intelligence Content</label>
+              <label className="text-[11px] font-bold uppercase text-muted-foreground/60 tracking-wide pl-1">Raw Intelligence Content</label>
               <textarea placeholder="DESCRIBE THE SITUATION IN DETAIL..." 
                 className="w-full bg-secondary/20 border border-border/20 rounded-2xl p-5 text-sm h-40 resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all leading-relaxed font-medium placeholder:text-muted-foreground/20"
                 value={manualInput} onChange={e => setManualInput(e.target.value)} />
-              <p className="text-[9px] text-muted-foreground/40 font-bold tracking-widest uppercase pl-1">Minimum 10 characters required for AI enrichment</p>
+              <p className="text-[11px] text-muted-foreground/40 font-bold tracking-wide uppercase pl-1">Minimum 10 characters required for AI enrichment</p>
             </div>
 
             <div className="grid grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest pl-1">Source Name</label>
+                <label className="text-[11px] font-bold uppercase text-muted-foreground/60 tracking-wide pl-1">Source Name</label>
                 <input placeholder="E.G. OSINTDEFENDER" 
-                  className="w-full bg-secondary/20 border border-border/20 rounded-xl px-4 h-12 text-xs font-black uppercase tracking-tight focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-muted-foreground/20"
+                  className="w-full bg-secondary/20 border border-border/20 rounded-xl px-4 h-12 text-xs font-bold uppercase tracking-tight focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-muted-foreground/20"
                   value={manualSource} onChange={e => setManualSource(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest pl-1">Original URL</label>
+                <label className="text-[11px] font-bold uppercase text-muted-foreground/60 tracking-wide pl-1">Original URL</label>
                 <input placeholder="HTTP://..." 
                   className="w-full bg-secondary/20 border border-border/20 rounded-xl px-4 h-12 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-muted-foreground/20"
                   value={manualSourceUrl} onChange={e => setManualSourceUrl(e.target.value)} />
@@ -932,7 +932,7 @@ export default function ModerationQueue() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest pl-1">Image Endpoint (Optional)</label>
+              <label className="text-[11px] font-bold uppercase text-muted-foreground/60 tracking-wide pl-1">Image Endpoint (Optional)</label>
               <input placeholder="HTTPS://BOLB.VERCEL.APP/..." 
                 className="w-full bg-secondary/20 border border-border/20 rounded-xl px-4 h-12 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-muted-foreground/20"
                 value={manualImageUrl} onChange={e => setManualImageUrl(e.target.value)} />
@@ -940,9 +940,9 @@ export default function ModerationQueue() {
           </div>
 
           <DialogFooter className="flex gap-4 pt-10 mt-4 border-t border-border/10">
-            <Button variant="ghost" onClick={() => setShowManualDialog(false)} className="flex-1 h-12 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-secondary/40">Abort Protocol</Button>
+            <Button variant="ghost" onClick={() => setShowManualDialog(false)} className="flex-1 h-12 rounded-2xl text-[11px] font-bold uppercase tracking-wide hover:bg-secondary/40">Abort Protocol</Button>
             <Button onClick={handleManualIngest} disabled={isIngestingManual || manualInput.length < 10} 
-              className="flex-1 h-12 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 group overflow-hidden relative">
+              className="flex-1 h-12 rounded-2xl text-[11px] font-bold uppercase tracking-wide shadow-lg shadow-primary/20 group overflow-hidden relative">
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               {isIngestingManual ? <Loader2 className="animate-spin" /> : "Initiate Injection"}
             </Button>

@@ -56,11 +56,11 @@ export default function SourcesPage() {
     <div className="p-8 space-y-8 animate-in fade-in duration-500 font-sans max-w-7xl mx-auto">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight font-display mb-1 uppercase flex items-center gap-3">
+          <h1 className="text-3xl font-bold tracking-tight font-display mb-1 flex items-center gap-3">
             <Radio className="w-8 h-8 text-primary shadow-[0_0_24px_rgba(var(--primary),0.5)] bg-primary/20 p-1.5 rounded-lg border border-primary/30" />
             Active Signal Relays
           </h1>
-          <p className="text-muted-foreground text-sm uppercase tracking-widest font-bold">Manage MTProto extraction nodes & OSINT pipelines</p>
+          <p className="text-muted-foreground text-sm uppercase tracking-wide font-medium">Manage MTProto extraction nodes & OSINT pipelines</p>
         </div>
       </div>
 
@@ -69,7 +69,7 @@ export default function SourcesPage() {
            {isLoading ? (
              <div className="flex flex-col items-center justify-center p-32 opacity-50 gap-6">
                  <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                 <span className="text-xs uppercase tracking-[0.3em] font-black text-primary animate-pulse">Synchronizing Topology...</span>
+                 <span className="text-xs uppercase tracking-wide font-bold text-primary animate-pulse">Synchronizing Topology...</span>
              </div>
            ) : !sources?.length ? (
              <Card className="p-20 text-center bg-card/20 backdrop-blur-xl border-dashed border-2 border-border/40 rounded-3xl">
@@ -97,9 +97,9 @@ export default function SourcesPage() {
                       </div>
                       
                       <div className="flex flex-col gap-1">
-                        <span className="font-black text-xl font-display uppercase tracking-tighter shadow-sm">{source.value}</span>
+                        <span className="font-bold text-xl font-display tracking-tight shadow-sm">{source.value}</span>
                         <div className="flex items-center gap-3">
-                          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold font-mono">
+                          <span className="text-[11px] text-muted-foreground uppercase tracking-wide font-bold font-mono">
                             TRGT_NODE_TYPE: <span className={cn(source.type === "telegram" ? "text-blue-400" : "text-orange-400")}>{source.type}</span>
                           </span>
                         </div>
@@ -111,12 +111,12 @@ export default function SourcesPage() {
                         {source.isActive ? (
                           <>
                             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)] animate-pulse" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mt-0.5">Live</span>
+                            <span className="text-[11px] font-bold uppercase tracking-wide text-emerald-500 mt-0.5">Live</span>
                           </>
                         ) : (
                           <>
                             <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mt-0.5">Dormant</span>
+                            <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground mt-0.5">Dormant</span>
                           </>
                         )}
                       </div>
@@ -141,26 +141,26 @@ export default function SourcesPage() {
           <Card className="bg-card/40 backdrop-blur-xl border-border/40 sticky top-8 overflow-hidden rounded-[2rem] shadow-2xl">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
             <div className="p-8 relative">
-              <h3 className="font-bold font-display uppercase tracking-[0.2em] mb-6 flex items-center gap-3 text-sm text-primary">
+              <h3 className="font-bold font-display uppercase tracking-wide mb-6 flex items-center gap-3 text-sm text-primary">
                 <Power className="w-5 h-5 bg-primary/20 p-1 rounded border border-primary/30 shadow-[0_0_12px_rgba(var(--primary),0.4)]" /> 
                 Deploy Extraction Node
               </h3>
               <form onSubmit={handleAdd} className="space-y-6">
                 <div className="space-y-3">
-                   <label className="text-[10px] font-black text-muted-foreground/80 uppercase tracking-widest flex items-center gap-2">
+                   <label className="text-[11px] font-bold text-muted-foreground/80 uppercase tracking-wide flex items-center gap-2">
                      <ArrowRight className="w-3 h-3 text-primary/60" /> Operation Protocol
                    </label>
                    <select 
                      value={newType} 
                      onChange={(e) => setNewType(e.target.value)}
-                     className="w-full bg-background/60 border border-border/40 shadow-inner p-4 rounded-xl text-xs font-black placeholder:text-muted-foreground/50 uppercase tracking-widest outline-none focus:ring-1 focus:ring-primary/50 transition-all font-sans text-foreground"
+                     className="w-full bg-background/60 border border-border/40 shadow-inner p-4 rounded-xl text-xs font-bold placeholder:text-muted-foreground/50 uppercase tracking-wide outline-none focus:ring-1 focus:ring-primary/50 transition-all font-sans text-foreground"
                    >
-                     <option value="telegram" className="bg-background text-foreground uppercase tracking-widest font-black text-xs">MTProto Network (Telegram View)</option>
-                     <option value="rss" disabled className="bg-background text-foreground uppercase tracking-widest font-black text-xs opacity-50">RSS Syndication (Dormant)</option>
+                     <option value="telegram" className="bg-background text-foreground uppercase tracking-wide font-bold text-xs">MTProto Network (Telegram View)</option>
+                     <option value="rss" disabled className="bg-background text-foreground uppercase tracking-wide font-bold text-xs opacity-50">RSS Syndication (Dormant)</option>
                    </select>
                 </div>
                 <div className="space-y-3">
-                   <label className="text-[10px] font-black text-muted-foreground/80 uppercase tracking-widest flex items-center gap-2">
+                   <label className="text-[11px] font-bold text-muted-foreground/80 uppercase tracking-wide flex items-center gap-2">
                      <ArrowRight className="w-3 h-3 text-primary/60" /> Target Identifier
                    </label>
                    <input 
@@ -169,13 +169,13 @@ export default function SourcesPage() {
                      onChange={e => setNewValue(e.target.value)}
                      placeholder="E.G. LIVEUAMAP"
                      required
-                     className="w-full bg-background/60 border border-border/40 shadow-inner p-4 rounded-xl text-xs font-black placeholder:text-muted-foreground/40 uppercase tracking-wide outline-none focus:ring-1 focus:ring-primary/50 transition-all font-mono text-foreground"
+                     className="w-full bg-background/60 border border-border/40 shadow-inner p-4 rounded-xl text-xs font-bold placeholder:text-muted-foreground/40 uppercase tracking-wide outline-none focus:ring-1 focus:ring-primary/50 transition-all font-mono text-foreground"
                    />
                 </div>
                 <Button 
                   type="submit" 
                   disabled={isAdding || !newValue} 
-                  className="w-full h-14 uppercase tracking-widest font-black text-xs gap-3 mt-4 shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all rounded-xl border border-primary/20"
+                  className="w-full h-14 uppercase tracking-wide font-bold text-xs gap-3 mt-4 shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all rounded-xl border border-primary/20"
                 >
                   {isAdding ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5 stroke-[3]" />}
                   Initialize Pipeline

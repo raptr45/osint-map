@@ -98,7 +98,7 @@ export function HeaderFilters() {
           <Button
             variant="ghost"
             size="sm"
-            className="rounded-full gap-2 px-5 h-9 text-[10px] font-bold uppercase tracking-widest hover:bg-background/60 outline-none font-display transition-all border border-transparent hover:border-border/40"
+            className="rounded-full gap-2 px-5 h-9 text-[11px] font-semibold uppercase tracking-wide hover:bg-background/60 outline-none font-display transition-all border border-transparent hover:border-border/40"
           >
             <Globe className="w-3 h-3 text-primary" />
             <span className="opacity-80">{activeRegionLabel}</span>
@@ -114,7 +114,7 @@ export function HeaderFilters() {
               key={opt.value}
               onClick={() => updateFilter("region", opt.value)}
               className={cn(
-                "flex items-center justify-between rounded-lg cursor-pointer text-[11px] font-medium",
+                "flex items-center justify-between rounded-lg cursor-pointer text-xs font-medium",
                 currentRegion === opt.value && "bg-primary/10 text-primary"
               )}
             >
@@ -132,7 +132,7 @@ export function HeaderFilters() {
             variant="ghost"
             size="sm"
             className={cn(
-              "rounded-full gap-2 px-5 h-9 text-[10px] font-bold uppercase tracking-widest hover:bg-background/60 outline-none font-display transition-all border border-transparent hover:border-border/40 max-w-[260px]",
+              "rounded-full gap-2 px-5 h-9 text-[11px] font-semibold uppercase tracking-wide hover:bg-background/60 outline-none font-display transition-all border border-transparent hover:border-border/40 max-w-[260px]",
               isCustomRange && "text-primary border-primary/20 bg-primary/5"
             )}
           >
@@ -160,7 +160,7 @@ export function HeaderFilters() {
               key={opt.value}
               onClick={() => { updateFilter("hours", opt.value); setShowDatePicker(false); }}
               className={cn(
-                "flex items-center justify-between rounded-lg cursor-pointer text-[11px] font-medium",
+                "flex items-center justify-between rounded-lg cursor-pointer text-xs font-medium",
                 !isCustomRange && currentTime === opt.value && "bg-primary/10 text-primary"
               )}
             >
@@ -174,7 +174,7 @@ export function HeaderFilters() {
           {/* Custom Range Toggle */}
           <DropdownMenuItem
             className={cn(
-              "flex items-center justify-between rounded-lg cursor-pointer text-[11px] font-medium",
+              "flex items-center justify-between rounded-lg cursor-pointer text-xs font-medium",
               isCustomRange && "bg-primary/10 text-primary"
             )}
             onSelect={(e) => {
@@ -193,7 +193,7 @@ export function HeaderFilters() {
           {showDatePicker && (
             <div data-date-picker className="px-2 pb-2 pt-1 space-y-2 mt-1 border-t border-border/20">
               <div className="space-y-1">
-                <label className="text-[9px] font-bold uppercase text-muted-foreground tracking-widest pl-0.5">
+                <label className="text-[11px] font-semibold uppercase text-muted-foreground tracking-wide pl-0.5">
                   From
                 </label>
                 <input
@@ -204,7 +204,7 @@ export function HeaderFilters() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[9px] font-bold uppercase text-muted-foreground tracking-widest pl-0.5">
+                <label className="text-[11px] font-semibold uppercase text-muted-foreground tracking-wide pl-0.5">
                   To
                 </label>
                 <input
