@@ -23,10 +23,14 @@ const TIME_OPTIONS = [
 ];
 
 const REGION_OPTIONS = [
-  { label: "Global Region", value: "global" },
-  { label: "Ukraine & E. Europe", value: "31.1,48.3,5" },
-  { label: "Middle East", value: "45.0,30.0,4" },
-  { label: "Korean Peninsula", value: "127.0,37.0,6" },
+  { label: "Global Region",     value: "global",        theater: null },
+  { label: "Ukraine & E. Europe", value: "31.1,48.3,5", theater: "UA" },
+  { label: "Middle East",        value: "45.0,30.0,4", theater: "IQ" },
+  { label: "Korean Peninsula",   value: "127.0,37.0,6",theater: "KR" },
+  { label: "Lebanon",            value: "35.5,33.9,8", theater: "LB" },
+  { label: "Gaza Strip",         value: "34.4,31.4,10",theater: "PS" },
+  { label: "Iran",               value: "53.7,32.4,5", theater: "IR" },
+  { label: "Yemen",              value: "47.0,15.5,6", theater: "YE" },
 ];
 
 export function HeaderFilters() {
@@ -48,8 +52,18 @@ export function HeaderFilters() {
     const params = new URLSearchParams(searchParams.toString());
     if (value === "all" || value === "global") {
       params.delete(key);
+      params.delete("theater"); // clear country highlight
     } else {
       params.set(key, value);
+    }
+    // When changing region, also set/clear theater
+    if (key === "region") {
+      const opt = REGION_OPTIONS.find((o) => o.value === value);
+      if (opt?.theater) {
+        params.set("theater", opt.theater);
+      } else {
+        params.delete("theater");
+      }
     }
     // Clear custom range when switching to preset
     if (key === "hours") {

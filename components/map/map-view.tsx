@@ -164,6 +164,52 @@ const unclusteredPulseLayer: maplibregl.LayerSpecification = {
     "circle-stroke-width": 0,
   },
 };
+// ─── Event type → emoji icon map ─────────────────────────────────────────────
+const EVENT_TYPE_EMOJI: Record<string, string> = {
+  airstrike:      "✈",
+  explosion:      "💥",
+  ground_assault: "⚔",
+  naval:          "⚓",
+  political:      "📢",
+  humanitarian:   "+",
+  unknown:        "•",
+};
+
+/** Derive event type from title keywords (heuristic until schema has explicit type) */
+function deriveEventType(title: string): string {
+  const t = title.toLowerCase();
+  if (t.includes("airstrike") || t.includes("air strike") || t.includes("aircraft") || t.includes("drone") || t.includes("f-16") || t.includes("f16")) return "airstrike";
+  if (t.includes("explosion") || t.includes("blast") || t.includes("strike") || t.includes("bombed") || t.includes("missile")) return "explosion";
+  if (t.includes("naval") || t.includes("ship") || t.includes("vessel") || t.includes("fleet") || t.includes("submarine")) return "naval";
+  if (t.includes("assault") || t.includes("infantry") || t.includes("troops") || t.includes("ground") || t.includes("forces")) return "ground_assault";
+  if (t.includes("ceasefire") || t.includes("diplomat") || t.includes("sanction") || t.includes("parliament") || t.includes("treaty")) return "political";
+  if (t.includes("aid") || t.includes("civilian") || t.includes("hospital") || t.includes("evacuati") || t.includes("refugee")) return "humanitarian";
+  return "unknown";
+}
+// ──────────────────────────────────────────────────────────────────────────────
+
+// ─── Country boundary fill layer configs ─────────────────────────────────────
+const countryFillLayer: maplibregl.LayerSpecification = {
+  id: "theater-fill",
+  type: "fill",
+  source: "theater-boundary",
+  paint: {
+    "fill-color": "#6366f1",
+    "fill-opacity": 0.08,
+  },
+};
+
+const countryLineLayer: maplibregl.LayerSpecification = {
+  id: "theater-line",
+  type: "line",
+  source: "theater-boundary",
+  paint: {
+    "line-color": "#6366f1",
+    "line-width": 1.5,
+    "line-opacity": 0.5,
+    "line-dasharray": [4, 2],
+  },
+};
 // ──────────────────────────────────────────────────────────────────────────────
 
 export function MapView({ role }: MapViewProps) {
@@ -175,25 +221,20 @@ export function MapView({ role }: MapViewProps) {
   const mapRef = React.useRef<MapRef>(null);
 
   const [bbox, setBbox] = React.useState<number[] | null>(null);
-  const [selectedEvent, setSelectedEvent] = React.useState<MapEvent | null>(
-    null
-  );
+  const [selectedEvent, setSelectedEvent] = React.useState<MapEvent | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
   const [isEditing, setIsEditing] = React.useState(false);
   const [lightboxUrl, setLightboxUrl] = React.useState<string | null>(null);
-  const [tempPos, setTempPos] = React.useState<{
-    lng: number;
-    lat: number;
-  } | null>(null);
-  // Cluster filter: list of event IDs visible in the clicked cluster
-  const [clusterFilter, setClusterFilter] = React.useState<string[] | null>(
-    null
-  );
+  const [tempPos, setTempPos] = React.useState<{ lng: number; lat: number } | null>(null);
+  const [clusterFilter, setClusterFilter] = React.useState<string[] | null>(null);
+  // Country boundary GeoJSON for the selected theater
+  const [theaterGeoJson, setTheaterGeoJson] = React.useState<GeoJSON.FeatureCollection | null>(null);
 
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hours = searchParams.get("hours");
   const region = searchParams.get("region");
+  const theater = searchParams.get("theater"); // ISO country code e.g. "LB"
   const dateFrom = searchParams.get("from");
   const dateTo = searchParams.get("to");
 
@@ -207,6 +248,26 @@ export function MapView({ role }: MapViewProps) {
       });
     }
   }, [region]);
+
+  // ── Fetch country boundary when theater changes ───────────────────────────
+  React.useEffect(() => {
+    if (!theater) {
+      setTheaterGeoJson(null);
+      return;
+    }
+    const controller = new AbortController();
+    fetch(
+      `https://nominatim.openstreetmap.org/search?country=${theater}&format=geojson&polygon_geojson=1&limit=1`,
+      { signal: controller.signal }
+    )
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.features?.length) setTheaterGeoJson(data as GeoJSON.FeatureCollection);
+      })
+      .catch(() => {}); // silently ignore network errors
+    return () => controller.abort();
+  }, [theater]);
+  // ─────────────────────────────────────────────────────────────────────────
 
   const {
     data: events,
@@ -246,9 +307,8 @@ export function MapView({ role }: MapViewProps) {
     }, 300);
   }, []);
 
-  // Convert events to GeoJSON
+  // Convert events to GeoJSON — includes derived event type for icon layer
   const geojson: GeoJSON.FeatureCollection = React.useMemo(() => {
-    // Filter out the active edit event so we don't have overlapping markers
     const filteredEvents = (events ?? []).filter(
       (evt) => !(isEditing && selectedEvent?.id === evt.id)
     );
@@ -257,7 +317,11 @@ export function MapView({ role }: MapViewProps) {
       features: filteredEvents.map((evt) => ({
         type: "Feature",
         geometry: { type: "Point", coordinates: [evt.lng, evt.lat] },
-        properties: { ...evt },
+        properties: {
+          ...evt,
+          eventType: deriveEventType(evt.title),
+          eventIcon: EVENT_TYPE_EMOJI[deriveEventType(evt.title)] ?? "•",
+        },
       })),
     };
   }, [events, isEditing, selectedEvent]);
@@ -339,31 +403,23 @@ export function MapView({ role }: MapViewProps) {
     [events]
   );
 
-  // Single unified map click handler — e.features is populated by interactiveLayerIds
+  // Single unified map click handler
   const handleMapClick = React.useCallback(
     (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
       const features = e.features ?? [];
       if (!features.length) {
-        // Clicked blank map — clear everything
         setClusterFilter(null);
         setSelectedEvent(null);
         return;
       }
       const feature = features[0];
       if (feature.properties?.cluster_id) {
-        // Cluster click
-        handleClusterClick({ ...e, features } as MapMouseEvent & {
-          features: MapGeoJSONFeature[];
-        });
+        handleClusterClick({ ...e, features } as MapMouseEvent & { features: MapGeoJSONFeature[] });
       } else {
-        // Individual marker click
-        handleMarkerClick({ ...e, features } as MapMouseEvent & {
-          features: MapGeoJSONFeature[];
-        });
+        handleMarkerClick({ ...e, features } as MapMouseEvent & { features: MapGeoJSONFeature[] });
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [events]
+    [handleClusterClick, handleMarkerClick]
   );
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -570,6 +626,14 @@ export function MapView({ role }: MapViewProps) {
           <GeolocateControl position="top-right" />
           <ScaleControl position="bottom-left" />
 
+          {/* ─── Theater Boundary Overlay ─── */}
+          {theaterGeoJson && (
+            <Source id="theater-boundary" type="geojson" data={theaterGeoJson}>
+              <Layer {...countryFillLayer} />
+              <Layer {...countryLineLayer} />
+            </Source>
+          )}
+
           {/* ─── GeoJSON Source + Layers ─── */}
           <Source
             id="events"
@@ -583,6 +647,21 @@ export function MapView({ role }: MapViewProps) {
             <Layer {...clusterCountLayer} />
             <Layer {...unclusteredPulseLayer} />
             <Layer {...unclusteredLayer} />
+            {/* Event type icon overlay — rendered as text on top of circles */}
+            <Layer
+              id="unclustered-icon"
+              type="symbol"
+              source="events"
+              filter={["!", ["has", "point_count"]]}
+              layout={{
+                "text-field": ["get", "eventIcon"],
+                "text-size": 10,
+                "text-anchor": "center",
+                "text-allow-overlap": true,
+                "text-ignore-placement": true,
+              } as maplibregl.SymbolLayerSpecification["layout"]}
+              paint={{ "text-color": "#ffffff", "text-halo-color": "rgba(0,0,0,0.1)", "text-halo-width": 1 }}
+            />
           </Source>
 
           {/* Active Edit Marker (Hybrid Approach) */}
