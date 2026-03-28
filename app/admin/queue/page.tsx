@@ -22,22 +22,38 @@ import {
   Activity,
   AlertCircle,
   AlertTriangle,
+  Bomb,
   Brain,
   CheckCircle2,
   ChevronRight,
   Clock,
+  Cross,
+  Crosshair,
+  Dam,
   Edit3,
   ExternalLink,
+  Flame,
   Globe,
   Image as ImageIcon,
   Link2,
   Loader2,
   MapPin,
+  Mic2,
+  Orbit,
+  Radio,
   RefreshCcw,
+  Rocket,
+  Shield,
+  ShieldAlert,
+  Ship,
   ShieldCheck,
+  Skull,
+  Target,
   Trash2,
+  Waves,
   X,
   Zap,
+  type LucideIcon,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import * as React from "react";
@@ -85,26 +101,48 @@ interface PublishedEvent {
 const SEVERITY_OPTIONS = ["low", "medium", "high", "critical"] as const;
 type Severity = (typeof SEVERITY_OPTIONS)[number];
 
-const EVENT_TYPE_LABELS: Record<string, { emoji: string; label: string }> = {
-  airstrike: { emoji: "🎯", label: "Airstrike" },
-  explosion: { emoji: "💥", label: "Explosion" },
-  artillery: { emoji: "☄️", label: "Artillery" },
-  missile: { emoji: "🚀", label: "Missile" },
-  drone: { emoji: "🛰️", label: "Drone" },
-  armor: { emoji: "🚜", label: "Armor" },
-  ground_assault: { emoji: "🔫", label: "Ground" },
-  police: { emoji: "🚨", label: "Police" },
-  naval: { emoji: "⚓", label: "Naval" },
-  fire: { emoji: "🔥", label: "Fire" },
-  casualties: { emoji: "🩸", label: "Casualties" },
-  wmd: { emoji: "☢️", label: "WMD" },
-  cyber: { emoji: "📡", label: "Cyber" },
-  infrastructure: { emoji: "🏭", label: "Infra" },
-  disaster: { emoji: "🌀", label: "Disaster" },
-  political: { emoji: "📢", label: "Political" },
-  protest: { emoji: "✊", label: "Protest" },
-  humanitarian: { emoji: "🏥", label: "Aid" },
-  unknown: { emoji: "💠", label: "Unknown" },
+const ICON_MAPPING: Record<string, LucideIcon> = {
+  airstrike: Target,
+  explosion: Bomb,
+  artillery: Radio,
+  missile: Rocket,
+  drone: Orbit,
+  armor: Shield,
+  ground_assault: Crosshair,
+  police: ShieldAlert,
+  naval: Ship,
+  fire: Flame,
+  casualties: Skull,
+  wmd: AlertTriangle,
+  cyber: Radio,
+  infrastructure: Dam,
+  disaster: Waves,
+  political: Mic2,
+  protest: Mic2,
+  humanitarian: Cross,
+  unknown: Activity,
+};
+
+const EVENT_TYPE_LABELS: Record<string, { label: string }> = {
+  airstrike:      { label: "Airstrike" },
+  explosion:      { label: "Explosion" },
+  artillery:      { label: "Artillery" },
+  missile:        { label: "Missile" },
+  drone:          { label: "Drone" },
+  armor:          { label: "Armor" },
+  ground_assault: { label: "Ground" },
+  police:         { label: "Police" },
+  naval:          { label: "Naval" },
+  fire:           { label: "Fire" },
+  casualties:     { label: "Casualties" },
+  wmd:            { label: "WMD" },
+  cyber:          { label: "Cyber" },
+  infrastructure: { label: "Infra" },
+  disaster:       { label: "Disaster" },
+  political:      { label: "Political" },
+  protest:        { label: "Protest" },
+  humanitarian:   { label: "Aid" },
+  unknown:        { label: "Unknown" },
 };
 
 const severityColor = (s: Severity) =>
@@ -1079,21 +1117,24 @@ export default function ModerationQueue() {
                                 </label>
                                 <div className="flex gap-1.5 flex-wrap">
                                   {Object.entries(EVENT_TYPE_LABELS).map(
-                                    ([type, { emoji, label }]) => (
-                                      <button
-                                        key={type}
-                                        onClick={() => setEditEventType(type)}
-                                        title={label}
-                                        className={cn(
-                                          "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all",
-                                          editEventType === type
-                                            ? "bg-primary/20 border-primary text-primary"
-                                            : "border-border/30 text-muted-foreground hover:border-border/50 hover:text-foreground"
-                                        )}
-                                      >
-                                        <span>{emoji}</span> {label}
-                                      </button>
-                                    )
+                                    ([type, { label }]) => {
+                                      const Icon = ICON_MAPPING[type] || Activity;
+                                      return (
+                                        <button
+                                          key={type}
+                                          onClick={() => setEditEventType(type)}
+                                          title={label}
+                                          className={cn(
+                                            "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all",
+                                            editEventType === type
+                                              ? "bg-primary/20 border-primary text-primary"
+                                              : "border-border/30 text-muted-foreground hover:border-border/50 hover:text-foreground"
+                                          )}
+                                        >
+                                          <Icon className="w-3 h-3" /> {label}
+                                        </button>
+                                      );
+                                    }
                                   )}
                                 </div>
                               </div>
@@ -1243,21 +1284,24 @@ export default function ModerationQueue() {
                                 </label>
                                 <div className="flex gap-1.5 flex-wrap">
                                   {Object.entries(EVENT_TYPE_LABELS).map(
-                                    ([type, { emoji, label }]) => (
-                                      <button
-                                        key={type}
-                                        onClick={() => setPubEventType(type)}
-                                        title={label}
-                                        className={cn(
-                                          "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all",
-                                          pubEventType === type
-                                            ? "bg-emerald-500/20 border-emerald-500 text-emerald-400"
-                                            : "border-border/30 text-muted-foreground hover:border-border/50 hover:text-foreground"
-                                        )}
-                                      >
-                                        <span>{emoji}</span> {label}
-                                      </button>
-                                    )
+                                    ([type, { label }]) => {
+                                      const Icon = ICON_MAPPING[type] || Activity;
+                                      return (
+                                        <button
+                                          key={type}
+                                          onClick={() => setPubEventType(type)}
+                                          title={label}
+                                          className={cn(
+                                            "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all",
+                                            pubEventType === type
+                                              ? "bg-emerald-500/20 border-emerald-500 text-emerald-400"
+                                              : "border-border/30 text-muted-foreground hover:border-border/50 hover:text-foreground"
+                                          )}
+                                        >
+                                          <Icon className="w-3 h-3" /> {label}
+                                        </button>
+                                      );
+                                    }
                                   )}
                                 </div>
                               </div>

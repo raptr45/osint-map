@@ -4,18 +4,35 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   Activity,
+  AlertTriangle,
+  Bomb,
   Camera,
   Check,
   ChevronRight,
+  Cross,
+  Crosshair,
+  Dam,
   Edit3,
   ExternalLink,
   Filter,
+  Flame,
   Globe,
   Loader2,
   Maximize2,
+  Mic2,
+  Orbit,
+  Radio,
+  Rocket,
+  Shield,
+  ShieldAlert,
+  Ship,
+  Skull,
+  Target,
   Trash2,
+  Waves,
   X,
   Zap,
+  type LucideIcon,
 } from "lucide-react";
 import type {
   GeoJSONSource,
@@ -26,6 +43,7 @@ import maplibregl from "maplibre-gl";
 import { useTheme } from "next-themes";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import Map, {
   FullscreenControl,
   GeolocateControl,
@@ -188,30 +206,51 @@ const criticalHeatmapLayer: maplibregl.LayerSpecification = {
       "rgba(239, 68, 68, 0.6)",
     ],
     "heatmap-radius": 40,
-    "heatmap-opacity": 0.8,
   },
 };
-// ─── Event type → emoji icon map ─────────────────────────────────────────────
-const EVENT_TYPE_EMOJI: Record<string, string> = {
-  airstrike: "✈️",
-  explosion: "💥",
-  artillery: "☄️",
-  missile: "🚀",
-  drone: "🛸",
-  armor: "🛡️",
-  ground_assault: "⚔️",
-  police: "👮",
-  naval: "⚓",
-  fire: "🔥",
-  casualties: "🩸",
-  wmd: "☢️",
-  cyber: "💻",
-  infrastructure: "🏗️",
-  disaster: "🌊",
-  political: "📢",
-  protest: "✊",
-  humanitarian: "🏥",
-  unknown: "🔹",
+const ICON_MAPPING: Record<string, LucideIcon> = {
+  airstrike: Target,
+  explosion: Bomb,
+  artillery: Radio,
+  missile: Rocket,
+  drone: Orbit,
+  armor: Shield,
+  ground_assault: Crosshair,
+  police: ShieldAlert,
+  naval: Ship,
+  fire: Flame,
+  casualties: Skull,
+  wmd: AlertTriangle,
+  cyber: Radio,
+  infrastructure: Dam,
+  disaster: Waves,
+  political: Mic2,
+  protest: Mic2,
+  humanitarian: Cross,
+  unknown: Activity,
+};
+
+// Map icons for non-map UI (Sidebar / Popups)
+const EVENT_TYPE_LABELS: Record<string, { label: string }> = {
+  airstrike:      { label: "Airstrike" },
+  explosion:      { label: "Explosion" },
+  artillery:      { label: "Artillery" },
+  missile:        { label: "Missile" },
+  drone:          { label: "Drone" },
+  armor:          { label: "Armor" },
+  ground_assault: { label: "Ground" },
+  police:         { label: "Police" },
+  naval:          { label: "Naval" },
+  fire:           { label: "Fire" },
+  casualties:     { label: "Casualties" },
+  wmd:            { label: "WMD" },
+  cyber:          { label: "Cyber" },
+  infrastructure: { label: "Infra" },
+  disaster:       { label: "Disaster" },
+  political:      { label: "Political" },
+  protest:        { label: "Protest" },
+  humanitarian:   { label: "Aid" },
+  unknown:        { label: "Unknown" },
 };
 
 /** Derive event type from title keywords (heuristic until schema has explicit type) */
@@ -403,11 +442,11 @@ export function MapView({ role }: MapViewProps) {
         return {
           type: "Feature",
           geometry: { type: "Point", coordinates: [evt.lng, evt.lat] },
-          properties: {
-            ...evt,
-            eventType: type,
-            eventIcon: EVENT_TYPE_EMOJI[type] ?? "•",
-          },
+            properties: {
+              ...evt,
+              eventType: type,
+              iconName: `icon-${type}`,
+            },
         };
       }),
     };
@@ -650,36 +689,35 @@ export function MapView({ role }: MapViewProps) {
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {Object.entries(theaterStats.types)
-                  .sort((a, b) => b[1] - a[1]) // Sort by count desc
-                  .map(([type, count]) => {
-                    if (count === 0 && eventTypeFilter !== type) return null;
-                    const isSelected = eventTypeFilter === type;
-                    return (
-                      <button
-                        key={type}
-                        onClick={() =>
-                          setEventTypeFilter(isSelected ? null : type)
-                        }
-                        className={cn(
-                          "flex flex-col items-center justify-center p-2 rounded-lg border transition-all text-[10px] font-semibold uppercase tracking-wide",
-                          isSelected
-                            ? "bg-primary/20 border-primary shadow-lg text-primary"
-                            : "bg-secondary/30 border-border/40 text-muted-foreground hover:bg-secondary/50 hover:border-primary/30 hover:text-foreground"
-                        )}
-                      >
-                        <span className="text-lg mb-1">
-                          {EVENT_TYPE_EMOJI[type] ?? "•"}
-                        </span>
-                        <span className="truncate w-full text-center">
-                          {type.replace("_", " ")}
-                        </span>
-                        <span className="text-[10px] font-bold bg-background/50 px-1.5 py-0.5 rounded-full mt-1.5 min-w-[20px]">
-                          {count}
-                        </span>
-                      </button>
-                    );
-                  })}
+                {Object.entries(EVENT_TYPE_LABELS).map(([type, { label }]) => {
+                  const Icon = ICON_MAPPING[type] || Activity;
+                  const count = theaterStats?.types[type] || 0;
+                  if (count === 0 && eventTypeFilter !== type) return null;
+                  return (
+                    <button
+                      key={type}
+                      onClick={() =>
+                        setEventTypeFilter(
+                          eventTypeFilter === type ? null : type
+                        )
+                      }
+                      className={cn(
+                        "flex flex-col items-center justify-center p-2 rounded-xl border transition-all text-[9.5px] font-black uppercase tracking-tighter",
+                        eventTypeFilter === type
+                          ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20 scale-[1.05] z-10"
+                          : "bg-secondary/20 border-border/10 text-muted-foreground hover:bg-secondary/40 hover:border-border/30"
+                      )}
+                    >
+                      <Icon className={cn("w-4 h-4 mb-1.5", eventTypeFilter === type ? "text-primary-foreground" : "text-primary/70")} />
+                      <span className="truncate w-full text-center">
+                        {label}
+                      </span>
+                      <span className="text-[10px] font-bold bg-background/50 px-1.5 py-0.5 rounded-full mt-1.5 min-w-[20px]">
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -804,7 +842,40 @@ export function MapView({ role }: MapViewProps) {
         <Map
           ref={mapRef}
           initialViewState={{ longitude: 31.1656, latitude: 48.3794, zoom: 5 }}
-          onLoad={updateBbox}
+          onLoad={(e) => {
+            updateBbox();
+            const map = e.target;
+            
+            // Register Lucide icons as map images for the tactical marker layer
+            Object.entries(ICON_MAPPING).forEach(([type, Icon]) => {
+              const iconName = `icon-${type}`;
+              if (!map.hasImage(iconName)) {
+                // Convert Lucide React component to raw SVG string
+                const svgString = renderToStaticMarkup(
+                  <Icon
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="32"
+                    height="32"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                );
+
+                const img = new Image();
+                img.onload = () => {
+                  if (!map.hasImage(iconName)) {
+                    map.addImage(iconName, img);
+                  }
+                };
+                // Use a Data URL string to load directly into the MapLibre cache
+                img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgString);
+              }
+            });
+          }}
           onMoveEnd={updateBbox}
           onClick={handleMapClick}
           mapStyle={mapStyle}
@@ -880,7 +951,7 @@ export function MapView({ role }: MapViewProps) {
               />
             )}
 
-            {/* Event type icon overlay */}
+            {/* Event type icon overlay using registered images */}
             <Layer
               id="unclustered-icon"
               type="symbol"
@@ -888,18 +959,13 @@ export function MapView({ role }: MapViewProps) {
               filter={["!", ["has", "point_count"]]}
               layout={
                 {
-                  "text-field": ["get", "eventIcon"],
-                  "text-size": 16,
-                  "text-anchor": "center",
-                  "text-allow-overlap": true,
-                  "text-ignore-placement": true,
+                  "icon-image": ["get", "iconName"],
+                  "icon-size": 0.45, // Adjusted to fit inside circle markers
+                  "icon-allow-overlap": true,
+                  "icon-ignore-placement": true,
+                  "icon-anchor": "center",
                 } as maplibregl.SymbolLayerSpecification["layout"]
               }
-              paint={{
-                "text-color": "#ffffff",
-                "text-halo-color": "rgba(0,0,0,0.3)",
-                "text-halo-width": 1.5,
-              }}
             />
           </Source>
 
@@ -1037,6 +1103,7 @@ function PopupContent({
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   const [imageError, setImageError] = React.useState(false);
+  const [expandedType, setExpandedType] = React.useState(false);
   const [title, setTitle] = React.useState(event.title);
   const [desc, setDesc] = React.useState(event.description);
   const [severity, setSeverity] = React.useState(event.severity);
@@ -1097,26 +1164,56 @@ function PopupContent({
           </div>
         </div>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest pl-1">
-            Event Type
-          </label>
-          <div className="flex gap-1 flex-wrap">
-            {Object.entries(EVENT_TYPE_EMOJI).map(([type, emoji]) => (
-              <button
-                key={type}
-                onClick={() => setEventType(type)}
-                title={type.replace("_", " ")}
-                className={cn(
-                  "flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase border transition-all",
-                  eventType === type
-                    ? "bg-primary/20 border-primary text-primary"
-                    : "bg-secondary/30 text-muted-foreground border-border/40 hover:bg-secondary/50"
-                )}
-              >
-                <span>{emoji}</span>
-              </button>
-            ))}
+          <div 
+            className="flex items-center justify-between cursor-pointer group px-1"
+            onClick={() => setExpandedType(!expandedType)}
+          >
+            <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest cursor-pointer group-hover:text-foreground transition-colors">
+              Event Type
+            </label>
+            <ChevronRight className={cn("w-3.5 h-3.5 text-muted-foreground/50 transition-transform", expandedType && "rotate-90")} />
           </div>
+          
+          {!expandedType ? (
+            <button
+              onClick={() => setExpandedType(true)}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-secondary/30 border border-border/40 hover:bg-secondary/50 transition-all text-[11px] font-semibold uppercase"
+            >
+              <div className="flex items-center gap-2">
+                {(() => {
+                  const CurrentIcon = ICON_MAPPING[eventType] || Activity;
+                  return <CurrentIcon className="w-4 h-4 text-primary" />;
+                })()}
+                <span>{EVENT_TYPE_LABELS[eventType]?.label || "Select Type"}</span>
+              </div>
+              <span className="text-[10px] text-muted-foreground opacity-60">Change</span>
+            </button>
+          ) : (
+            <div className="flex gap-1 flex-wrap">
+              {Object.entries(EVENT_TYPE_LABELS).map(([type, { label }]) => {
+                const Icon = ICON_MAPPING[type] || Activity;
+                return (
+                  <button
+                    key={type}
+                    onClick={() => {
+                      setEventType(type);
+                      setExpandedType(false);
+                    }}
+                    title={label}
+                    className={cn(
+                      "flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase border transition-all",
+                      eventType === type
+                        ? "bg-primary/20 border-primary text-primary"
+                        : "bg-secondary/30 text-muted-foreground border-border/40 hover:bg-secondary/50"
+                    )}
+                  >
+                    <Icon className="w-3 h-3" />
+                    <span>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-2">
           <Button
