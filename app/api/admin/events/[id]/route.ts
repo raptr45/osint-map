@@ -32,17 +32,21 @@ export async function PATCH(
 
   try {
     const { id } = await params;
-    const { title, description, severity, lng, lat, sourceUrl, imageUrl } = await req.json();
+    const { title, description, severity, eventType, lng, lat, sourceUrl, imageUrl, sourceCreatedAt } = await req.json();
 
-    const updateData: Record<string, string | Date | ReturnType<typeof import("@/lib/map-logic").pointSql>> = {
+    const updateData: Record<string, unknown> = {
       title,
       description,
       severity,
       updatedAt: new Date(),
     };
 
+    if (eventType !== undefined) updateData.eventType = eventType;
     if (sourceUrl !== undefined) updateData.sourceUrl = sourceUrl;
     if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+    if (sourceCreatedAt !== undefined) {
+      updateData.sourceCreatedAt = sourceCreatedAt ? new Date(sourceCreatedAt) : null;
+    }
 
     if (lng !== undefined && lat !== undefined) {
       const { pointSql } = await import("@/lib/map-logic");

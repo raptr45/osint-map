@@ -75,6 +75,7 @@ interface MapEvent {
   title: string;
   description: string;
   severity: "low" | "medium" | "high" | "critical";
+  eventType?: string;
   lng: number;
   lat: number;
   imageUrl?: string | null;
@@ -141,7 +142,7 @@ const unclusteredLayer: maplibregl.LayerSpecification = {
   filter: ["!", ["has", "point_count"]],
   paint: {
     "circle-color": SEVERITY_COLOR_EXPR,
-    "circle-radius": 10,
+    "circle-radius": 18,
     "circle-stroke-width": 2,
     "circle-stroke-color": "rgba(255,255,255,0.6)",
     "circle-opacity": 0.95,
@@ -159,31 +160,100 @@ const unclusteredPulseLayer: maplibregl.LayerSpecification = {
   ],
   paint: {
     "circle-color": "#ef4444",
-    "circle-radius": 18,
+    "circle-radius": 28,
     "circle-opacity": 0.25,
     "circle-stroke-width": 0,
   },
 };
+
+const criticalHeatmapLayer: maplibregl.LayerSpecification = {
+  id: "critical-heatmap",
+  type: "heatmap",
+  source: "events",
+  filter: ["==", ["get", "severity"], "critical"],
+  paint: {
+    "heatmap-weight": 1,
+    "heatmap-intensity": 1,
+    "heatmap-color": [
+      "interpolate",
+      ["linear"],
+      ["heatmap-density"],
+      0,
+      "rgba(239, 68, 68, 0)",
+      0.2,
+      "rgba(239, 68, 68, 0.2)",
+      0.5,
+      "rgba(239, 68, 68, 0.4)",
+      1,
+      "rgba(239, 68, 68, 0.6)",
+    ],
+    "heatmap-radius": 40,
+    "heatmap-opacity": 0.8,
+  },
+};
 // ─── Event type → emoji icon map ─────────────────────────────────────────────
 const EVENT_TYPE_EMOJI: Record<string, string> = {
-  airstrike:      "✈",
-  explosion:      "💥",
+  airstrike: "✈",
+  explosion: "💥",
   ground_assault: "⚔",
-  naval:          "⚓",
-  political:      "📢",
-  humanitarian:   "+",
-  unknown:        "•",
+  naval: "⚓",
+  political: "📢",
+  humanitarian: "+",
+  unknown: "•",
 };
 
 /** Derive event type from title keywords (heuristic until schema has explicit type) */
 function deriveEventType(title: string): string {
   const t = title.toLowerCase();
-  if (t.includes("airstrike") || t.includes("air strike") || t.includes("aircraft") || t.includes("drone") || t.includes("f-16") || t.includes("f16")) return "airstrike";
-  if (t.includes("explosion") || t.includes("blast") || t.includes("strike") || t.includes("bombed") || t.includes("missile")) return "explosion";
-  if (t.includes("naval") || t.includes("ship") || t.includes("vessel") || t.includes("fleet") || t.includes("submarine")) return "naval";
-  if (t.includes("assault") || t.includes("infantry") || t.includes("troops") || t.includes("ground") || t.includes("forces")) return "ground_assault";
-  if (t.includes("ceasefire") || t.includes("diplomat") || t.includes("sanction") || t.includes("parliament") || t.includes("treaty")) return "political";
-  if (t.includes("aid") || t.includes("civilian") || t.includes("hospital") || t.includes("evacuati") || t.includes("refugee")) return "humanitarian";
+  if (
+    t.includes("airstrike") ||
+    t.includes("air strike") ||
+    t.includes("aircraft") ||
+    t.includes("drone") ||
+    t.includes("f-16") ||
+    t.includes("f16")
+  )
+    return "airstrike";
+  if (
+    t.includes("explosion") ||
+    t.includes("blast") ||
+    t.includes("strike") ||
+    t.includes("bombed") ||
+    t.includes("missile")
+  )
+    return "explosion";
+  if (
+    t.includes("naval") ||
+    t.includes("ship") ||
+    t.includes("vessel") ||
+    t.includes("fleet") ||
+    t.includes("submarine")
+  )
+    return "naval";
+  if (
+    t.includes("assault") ||
+    t.includes("infantry") ||
+    t.includes("troops") ||
+    t.includes("ground") ||
+    t.includes("forces")
+  )
+    return "ground_assault";
+  if (
+    t.includes("ceasefire") ||
+    t.includes("diplomat") ||
+    t.includes("sanction") ||
+    t.includes("parliament") ||
+    t.includes("treaty")
+  )
+    return "political";
+  if (
+    t.includes("aid") ||
+    t.includes("civilian") ||
+    t.includes("hospital") ||
+    t.includes("evacuati") ||
+    t.includes("refugee")
+  )
+    return "humanitarian";
   return "unknown";
 }
 // ──────────────────────────────────────────────────────────────────────────────
@@ -221,14 +291,25 @@ export function MapView({ role }: MapViewProps) {
   const mapRef = React.useRef<MapRef>(null);
 
   const [bbox, setBbox] = React.useState<number[] | null>(null);
-  const [selectedEvent, setSelectedEvent] = React.useState<MapEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = React.useState<MapEvent | null>(
+    null
+  );
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
   const [isEditing, setIsEditing] = React.useState(false);
   const [lightboxUrl, setLightboxUrl] = React.useState<string | null>(null);
-  const [tempPos, setTempPos] = React.useState<{ lng: number; lat: number } | null>(null);
-  const [clusterFilter, setClusterFilter] = React.useState<string[] | null>(null);
+  const [tempPos, setTempPos] = React.useState<{
+    lng: number;
+    lat: number;
+  } | null>(null);
+  const [clusterFilter, setClusterFilter] = React.useState<string[] | null>(
+    null
+  );
+  const [eventTypeFilter, setEventTypeFilter] = React.useState<string | null>(
+    null
+  );
   // Country boundary GeoJSON for the selected theater
-  const [theaterGeoJson, setTheaterGeoJson] = React.useState<GeoJSON.FeatureCollection | null>(null);
+  const [theaterGeoJson, setTheaterGeoJson] =
+    React.useState<GeoJSON.FeatureCollection | null>(null);
 
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -251,6 +332,7 @@ export function MapView({ role }: MapViewProps) {
 
   // ── Fetch country boundary when theater changes ───────────────────────────
   React.useEffect(() => {
+    setEventTypeFilter(null); // Clear type filter on theater change
     if (!theater) {
       setTheaterGeoJson(null);
       return;
@@ -262,7 +344,8 @@ export function MapView({ role }: MapViewProps) {
     )
       .then((r) => r.json())
       .then((data) => {
-        if (data?.features?.length) setTheaterGeoJson(data as GeoJSON.FeatureCollection);
+        if (data?.features?.length)
+          setTheaterGeoJson(data as GeoJSON.FeatureCollection);
       })
       .catch(() => {}); // silently ignore network errors
     return () => controller.abort();
@@ -307,30 +390,72 @@ export function MapView({ role }: MapViewProps) {
     }, 300);
   }, []);
 
-  // Convert events to GeoJSON — includes derived event type for icon layer
+  // Convert events to GeoJSON — uses stored eventType from DB, falls back to keyword heuristic
   const geojson: GeoJSON.FeatureCollection = React.useMemo(() => {
-    const filteredEvents = (events ?? []).filter(
-      (evt) => !(isEditing && selectedEvent?.id === evt.id)
-    );
+    const filteredEvents = (events ?? []).filter((evt) => {
+      const isEditingThis = isEditing && selectedEvent?.id === evt.id;
+      if (isEditingThis) return false;
+      const type =
+        evt.eventType && evt.eventType !== "unknown"
+          ? evt.eventType
+          : deriveEventType(evt.title);
+      if (eventTypeFilter && type !== eventTypeFilter) return false;
+      return true;
+    });
     return {
       type: "FeatureCollection",
-      features: filteredEvents.map((evt) => ({
-        type: "Feature",
-        geometry: { type: "Point", coordinates: [evt.lng, evt.lat] },
-        properties: {
-          ...evt,
-          eventType: deriveEventType(evt.title),
-          eventIcon: EVENT_TYPE_EMOJI[deriveEventType(evt.title)] ?? "•",
-        },
-      })),
+      features: filteredEvents.map((evt) => {
+        const type =
+          evt.eventType && evt.eventType !== "unknown"
+            ? evt.eventType
+            : deriveEventType(evt.title);
+        return {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [evt.lng, evt.lat] },
+          properties: {
+            ...evt,
+            eventType: type,
+            eventIcon: EVENT_TYPE_EMOJI[type] ?? "•",
+          },
+        };
+      }),
     };
-  }, [events, isEditing, selectedEvent]);
+  }, [events, isEditing, selectedEvent, eventTypeFilter]);
 
-  // Events visible in sidebar (respects cluster filter)
+  // Events visible in sidebar (respects cluster filter and event type filter)
   const sidebarEvents = React.useMemo(() => {
-    if (!clusterFilter) return events ?? [];
-    return (events ?? []).filter((e) => clusterFilter.includes(e.id));
-  }, [events, clusterFilter]);
+    let evts = events ?? [];
+    if (clusterFilter) {
+      evts = evts.filter((e) => clusterFilter.includes(e.id));
+    }
+    if (eventTypeFilter) {
+      evts = evts.filter((e) => {
+        const type =
+          e.eventType && e.eventType !== "unknown"
+            ? e.eventType
+            : deriveEventType(e.title);
+        return type === eventTypeFilter;
+      });
+    }
+    return evts;
+  }, [events, clusterFilter, eventTypeFilter]);
+
+  // Theater summary stats
+  const theaterStats = React.useMemo(() => {
+    if (!theater || !events) return null;
+    const stats = {
+      total: 0,
+      critical: 0,
+      types: {} as Record<string, number>,
+    };
+    events.forEach((e) => {
+      stats.total++;
+      if (e.severity === "critical") stats.critical++;
+      const type = deriveEventType(e.title);
+      stats.types[type] = (stats.types[type] || 0) + 1;
+    });
+    return stats;
+  }, [events, theater]);
 
   const groupedEvents = React.useMemo(() => {
     const groups: Record<string, MapEvent[]> = {};
@@ -359,31 +484,57 @@ export function MapView({ role }: MapViewProps) {
     (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
       const feature = e.features?.[0];
       if (!feature || !mapRef.current) return;
+
       const map = mapRef.current.getMap();
+      const coordinates = (feature.geometry as GeoJSON.Point).coordinates as [
+        number,
+        number
+      ];
+      const currentZoom = map.getZoom();
+      const fallbackZoom = Math.min(currentZoom + 2.5, 13);
+
+      // Zoom immediately to cluster center with a sane fallback in case the cluster ID
+      // is stale (SWR refreshes create new cluster IDs every 10s).
       const source = map.getSource("events") as GeoJSONSource & {
-        getClusterLeaves: (
+        getClusterExpansionZoom: (
           id: number,
-          limit: number,
-          offset: number,
-          cb: (err: Error | null, features: MapGeoJSONFeature[]) => void
+          cb: (err: Error | null, zoom: number) => void
         ) => void;
       };
+
       const clusterId = feature.properties?.cluster_id as number;
-      const count = feature.properties?.point_count as number;
-      source.getClusterLeaves(
-        clusterId,
-        Math.min(count, 200),
-        0,
-        (err, leaves) => {
-          if (err || !leaves) return;
-          const ids = leaves
-            .map((f) => f.properties?.id as string)
-            .filter(Boolean);
-          setClusterFilter(ids);
-          setSelectedEvent(null);
-          setIsSidebarOpen(true); // ensure sidebar is open
-        }
-      );
+      let resolved = false;
+
+      try {
+        source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+          resolved = true;
+          map.easeTo({
+            center: coordinates,
+            zoom:
+              err || zoom === undefined
+                ? fallbackZoom
+                : Math.min(zoom + 0.5, 13),
+            duration: 600,
+          });
+        });
+      } catch {
+        resolved = true;
+        map.easeTo({ center: coordinates, zoom: fallbackZoom, duration: 600 });
+      }
+
+      // Safety: if callback never fires within 400ms (stale ID edge-case), use fallback
+      setTimeout(() => {
+        if (!resolved)
+          map.easeTo({
+            center: coordinates,
+            zoom: fallbackZoom,
+            duration: 600,
+          });
+      }, 400);
+
+      // Clear sidebar cluster filter — viewport update will refresh the list naturally
+      setClusterFilter(null);
+      setSelectedEvent(null);
     },
     []
   );
@@ -414,9 +565,13 @@ export function MapView({ role }: MapViewProps) {
       }
       const feature = features[0];
       if (feature.properties?.cluster_id) {
-        handleClusterClick({ ...e, features } as MapMouseEvent & { features: MapGeoJSONFeature[] });
+        handleClusterClick({ ...e, features } as MapMouseEvent & {
+          features: MapGeoJSONFeature[];
+        });
       } else {
-        handleMarkerClick({ ...e, features } as MapMouseEvent & { features: MapGeoJSONFeature[] });
+        handleMarkerClick({ ...e, features } as MapMouseEvent & {
+          features: MapGeoJSONFeature[];
+        });
       }
     },
     [handleClusterClick, handleMarkerClick]
@@ -436,23 +591,21 @@ export function MapView({ role }: MapViewProps) {
         )}
       >
         <div className="p-6 flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Activity className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-bold text-lg tracking-tight font-display">
-                  System Feed
-                </h3>
-                <p className="text-[11px] text-muted-foreground uppercase font-medium tracking-wide leading-none font-sans">
-                  Intelligence Stream
-                </p>
-              </div>
+          {/* Compact Tactical Header */}
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/10">
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-60" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+              </span>
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-primary/80">
+                {clusterFilter ? `Cluster Sync (${clusterFilter.length})` : "Live Events Feed"}
+              </h3>
             </div>
-            {isLoading && (
-              <Zap className="w-4 h-4 text-primary animate-pulse" />
+            {isLoading ? (
+              <Zap className="w-3.5 h-3.5 text-primary animate-pulse" />
+            ) : (
+              <Activity className="w-3.5 h-3.5 text-muted-foreground/30" />
             )}
           </div>
 
@@ -475,17 +628,73 @@ export function MapView({ role }: MapViewProps) {
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
-            {/* Live indicator */}
-            <div className="flex items-center gap-2 text-[11px] font-semibold text-primary/70 bg-primary/5 p-3 rounded-xl border border-primary/10">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-              </span>
-              {clusterFilter
-                ? `CLUSTER — ${clusterFilter.length} SIGNALS`
-                : "GLOBAL REPOSITORY SYNC ACTIVE"}
+          {/* Active Event Type Filter Banner (if no theater stats) */}
+          {eventTypeFilter && !theaterStats && !clusterFilter && (
+            <div className="flex items-center justify-between gap-2 mb-3 px-3 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary">
+              <div className="flex items-center gap-2">
+                <Filter className="w-3.5 h-3.5 shrink-0" />
+                <span className="text-[11px] font-bold uppercase tracking-widest">
+                  Filtered: {eventTypeFilter.replace("_", " ")}
+                </span>
+              </div>
+              <button
+                onClick={() => setEventTypeFilter(null)}
+                className="hover:text-primary/70 transition-colors"
+                title="Clear filter"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
+          )}
+
+          {/* Theater Overview */}
+          {theaterStats && !clusterFilter && (
+            <div className="mb-4 space-y-2 border-b border-border/20 pb-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground font-display">
+                  Theater Overview
+                </span>
+                <span className="text-[10px] uppercase font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded">
+                  {theaterStats.critical} Critical Zones
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {Object.entries(theaterStats.types)
+                  .sort((a, b) => b[1] - a[1]) // Sort by count desc
+                  .map(([type, count]) => {
+                    if (count === 0 && eventTypeFilter !== type) return null;
+                    const isSelected = eventTypeFilter === type;
+                    return (
+                      <button
+                        key={type}
+                        onClick={() =>
+                          setEventTypeFilter(isSelected ? null : type)
+                        }
+                        className={cn(
+                          "flex flex-col items-center justify-center p-2 rounded-lg border transition-all text-[10px] font-semibold uppercase tracking-wide",
+                          isSelected
+                            ? "bg-primary/20 border-primary shadow-lg text-primary"
+                            : "bg-secondary/30 border-border/40 text-muted-foreground hover:bg-secondary/50 hover:border-primary/30 hover:text-foreground"
+                        )}
+                      >
+                        <span className="text-lg mb-1">
+                          {EVENT_TYPE_EMOJI[type] ?? "•"}
+                        </span>
+                        <span className="truncate w-full text-center">
+                          {type.replace("_", " ")}
+                        </span>
+                        <span className="text-[10px] font-bold bg-background/50 px-1.5 py-0.5 rounded-full mt-1.5 min-w-[20px]">
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+
+          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
+            {/* Removed bulky live indicator */}
 
             {sidebarEvents.length > 0 ? (
               Object.entries(groupedEvents).map(([date, dayEvents]) => (
@@ -641,26 +850,65 @@ export function MapView({ role }: MapViewProps) {
             data={geojson}
             cluster={true}
             clusterMaxZoom={14}
-            clusterRadius={50}
+            clusterRadius={40}
           >
             <Layer {...clusterLayer} />
             <Layer {...clusterCountLayer} />
+            <Layer {...criticalHeatmapLayer} />
             <Layer {...unclusteredPulseLayer} />
             <Layer {...unclusteredLayer} />
-            {/* Event type icon overlay — rendered as text on top of circles */}
+
+            {/* Selected marker — glow ring rendered on top */}
+            {selectedEvent && (
+              <Layer
+                id="selected-glow"
+                type="circle"
+                source="events"
+                filter={["==", ["get", "id"], selectedEvent.id]}
+                paint={{
+                  "circle-color": "#ffffff",
+                  "circle-radius": 30,
+                  "circle-opacity": 0.18,
+                  "circle-stroke-width": 0,
+                }}
+              />
+            )}
+            {selectedEvent && (
+              <Layer
+                id="selected-ring"
+                type="circle"
+                source="events"
+                filter={["==", ["get", "id"], selectedEvent.id]}
+                paint={{
+                  "circle-color": "rgba(0,0,0,0)",
+                  "circle-radius": 22,
+                  "circle-opacity": 0,
+                  "circle-stroke-width": 3,
+                  "circle-stroke-color": "#ffffff",
+                }}
+              />
+            )}
+
+            {/* Event type icon overlay */}
             <Layer
               id="unclustered-icon"
               type="symbol"
               source="events"
               filter={["!", ["has", "point_count"]]}
-              layout={{
-                "text-field": ["get", "eventIcon"],
-                "text-size": 10,
-                "text-anchor": "center",
-                "text-allow-overlap": true,
-                "text-ignore-placement": true,
-              } as maplibregl.SymbolLayerSpecification["layout"]}
-              paint={{ "text-color": "#ffffff", "text-halo-color": "rgba(0,0,0,0.1)", "text-halo-width": 1 }}
+              layout={
+                {
+                  "text-field": ["get", "eventIcon"],
+                  "text-size": 16,
+                  "text-anchor": "center",
+                  "text-allow-overlap": true,
+                  "text-ignore-placement": true,
+                } as maplibregl.SymbolLayerSpecification["layout"]
+              }
+              paint={{
+                "text-color": "#ffffff",
+                "text-halo-color": "rgba(0,0,0,0.3)",
+                "text-halo-width": 1.5,
+              }}
             />
           </Source>
 
@@ -801,6 +1049,11 @@ function PopupContent({
   const [title, setTitle] = React.useState(event.title);
   const [desc, setDesc] = React.useState(event.description);
   const [severity, setSeverity] = React.useState(event.severity);
+  const [eventType, setEventType] = React.useState(() =>
+    event.eventType && event.eventType !== "unknown"
+      ? event.eventType
+      : deriveEventType(event.title)
+  );
 
   const formatTime = (dateStr: string) =>
     new Date(dateStr).toLocaleTimeString([], {
@@ -852,6 +1105,28 @@ function PopupContent({
             ))}
           </div>
         </div>
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest pl-1">
+            Event Type
+          </label>
+          <div className="flex gap-1 flex-wrap">
+            {Object.entries(EVENT_TYPE_EMOJI).map(([type, emoji]) => (
+              <button
+                key={type}
+                onClick={() => setEventType(type)}
+                title={type.replace("_", " ")}
+                className={cn(
+                  "flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase border transition-all",
+                  eventType === type
+                    ? "bg-primary/20 border-primary text-primary"
+                    : "bg-secondary/30 text-muted-foreground border-border/40 hover:bg-secondary/50"
+                )}
+              >
+                <span>{emoji}</span>
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-2">
           <Button
             variant="outline"
@@ -874,6 +1149,7 @@ function PopupContent({
                   title,
                   description: desc,
                   severity,
+                  eventType,
                 });
               } finally {
                 setIsSaving(false);

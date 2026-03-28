@@ -38,6 +38,7 @@ export async function getEventsInViewport(
     title: publishedEvents.title,
     description: publishedEvents.description,
     severity: publishedEvents.severity,
+    eventType: publishedEvents.eventType,
     imageUrl: publishedEvents.imageUrl,
     sourceUrl: publishedEvents.sourceUrl,
     createdAt: publishedEvents.createdAt,

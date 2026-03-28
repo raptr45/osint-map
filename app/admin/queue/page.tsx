@@ -25,6 +25,7 @@ import {
   Brain,
   CheckCircle2,
   ChevronRight,
+  Clock,
   Edit3,
   ExternalLink,
   Globe,
@@ -71,6 +72,7 @@ interface PublishedEvent {
   title: string;
   description: string;
   severity: "low" | "medium" | "high" | "critical";
+  eventType: string | null;
   imageUrl: string | null;
   sourceUrl: string | null;
   sourceCreatedAt: string | null;
@@ -82,6 +84,16 @@ interface PublishedEvent {
 
 const SEVERITY_OPTIONS = ["low", "medium", "high", "critical"] as const;
 type Severity = (typeof SEVERITY_OPTIONS)[number];
+
+const EVENT_TYPE_LABELS: Record<string, { emoji: string; label: string }> = {
+  airstrike:      { emoji: "✈", label: "Airstrike" },
+  explosion:      { emoji: "💥", label: "Explosion" },
+  ground_assault: { emoji: "⚔", label: "Ground" },
+  naval:          { emoji: "⚓", label: "Naval" },
+  political:      { emoji: "📢", label: "Political" },
+  humanitarian:   { emoji: "+", label: "Aid" },
+  unknown:        { emoji: "•", label: "Unknown" },
+};
 
 const severityColor = (s: Severity) =>
   ({
@@ -148,6 +160,8 @@ export default function ModerationQueue() {
   const [editDesc, setEditDesc] = React.useState("");
   const [editSourceUrl, setEditSourceUrl] = React.useState("");
   const [editSeverity, setEditSeverity] = React.useState<Severity>("medium");
+  const [editEventType, setEditEventType] = React.useState("unknown");
+  const [editEventTime, setEditEventTime] = React.useState(""); // ISO string for sourceCreatedAt override
   const [editPos, setEditPos] = React.useState<{
     lng: number;
     lat: number;
@@ -159,6 +173,8 @@ export default function ModerationQueue() {
   const [pubSourceUrl, setPubSourceUrl] = React.useState("");
   const [pubImageUrl, setPubImageUrl] = React.useState("");
   const [pubSeverity, setPubSeverity] = React.useState<Severity>("medium");
+  const [pubEventType, setPubEventType] = React.useState("unknown");
+  const [pubEventTime, setPubEventTime] = React.useState(""); // ISO string for sourceCreatedAt override
   const [pubPos, setPubPos] = React.useState<{
     lng: number;
     lat: number;
@@ -212,6 +228,8 @@ export default function ModerationQueue() {
       setEditPos(null);
       setEditSourceUrl("");
       setEditSeverity("medium");
+      setEditEventType("unknown");
+      setEditEventTime("");
       return;
     }
     if (lastPendingId.current !== selectedPending.id) {
@@ -219,6 +237,14 @@ export default function ModerationQueue() {
       setEditDesc(selectedPending.suggestedDescription || "");
       setEditSourceUrl(selectedPending.sourceUrl || "");
       setEditSeverity("medium");
+      setEditEventType("unknown");
+      // Pre-fill with the original source time so admin can tweak it
+      if (selectedPending.sourceCreatedAt) {
+        const d = new Date(selectedPending.sourceCreatedAt);
+        setEditEventTime(d.toISOString().slice(0, 16)); // datetime-local format
+      } else {
+        setEditEventTime(new Date().toISOString().slice(0, 16));
+      }
       if (selectedPending.lng && selectedPending.lat) {
         const p = { lng: selectedPending.lng, lat: selectedPending.lat };
         setEditPos(p);
@@ -244,6 +270,8 @@ export default function ModerationQueue() {
       setPubSourceUrl("");
       setPubImageUrl("");
       setPubSeverity("medium");
+      setPubEventType("unknown");
+      setPubEventTime("");
       return;
     }
     if (lastPublishedId.current !== selectedPublished.id) {
@@ -252,6 +280,17 @@ export default function ModerationQueue() {
       setPubSourceUrl(selectedPublished.sourceUrl || "");
       setPubImageUrl(selectedPublished.imageUrl || "");
       setPubSeverity(selectedPublished.severity || "medium");
+      // Sync stored eventType so picker shows correct current value
+      setPubEventType(selectedPublished.eventType || "unknown");
+      if (selectedPublished.sourceCreatedAt) {
+        const d = new Date(selectedPublished.sourceCreatedAt);
+        setPubEventTime(d.toISOString().slice(0, 16));
+      } else if (selectedPublished.createdAt) {
+        const d = new Date(selectedPublished.createdAt);
+        setPubEventTime(d.toISOString().slice(0, 16));
+      } else {
+        setPubEventTime("");
+      }
       if (selectedPublished.lng && selectedPublished.lat) {
         const p = { lng: selectedPublished.lng, lat: selectedPublished.lat };
         setPubPos(p);
@@ -343,6 +382,8 @@ export default function ModerationQueue() {
           lat: editPos.lat,
           severity: editSeverity,
           sourceUrl: editSourceUrl,
+          eventType: editEventType,
+          sourceCreatedAt: editEventTime ? new Date(editEventTime).toISOString() : undefined,
         }),
       });
       if (res.ok) {
@@ -425,6 +466,8 @@ export default function ModerationQueue() {
         severity: pubSeverity,
         sourceUrl: pubSourceUrl,
         imageUrl: pubImageUrl,
+        eventType: pubEventType,
+        sourceCreatedAt: pubEventTime ? new Date(pubEventTime).toISOString() : undefined,
       };
       if (pubPos) {
         body.lng = pubPos.lng;
@@ -589,7 +632,7 @@ export default function ModerationQueue() {
           [
             {
               key: "pending",
-              label: "Moderation Queue",
+              label: "Pending Events",
               count: queue?.length,
               icon: AlertTriangle,
             },
@@ -1013,6 +1056,46 @@ export default function ModerationQueue() {
                                 </div>
                               </div>
 
+                              {/* Event Type Picker */}
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">
+                                  Event Type Icon
+                                </label>
+                                <div className="flex gap-1.5 flex-wrap">
+                                  {Object.entries(EVENT_TYPE_LABELS).map(([type, { emoji, label }]) => (
+                                    <button
+                                      key={type}
+                                      onClick={() => setEditEventType(type)}
+                                      title={label}
+                                      className={cn(
+                                        "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all",
+                                        editEventType === type
+                                          ? "bg-primary/20 border-primary text-primary"
+                                          : "border-border/30 text-muted-foreground hover:border-border/50 hover:text-foreground"
+                                      )}
+                                    >
+                                      <span>{emoji}</span> {label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Event Time Override */}
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest flex items-center gap-1.5">
+                                  <Clock className="w-3 h-3" /> Event Time
+                                  <span className="text-muted-foreground/30 normal-case font-normal">
+                                    (overrides source time on map)
+                                  </span>
+                                </label>
+                                <input
+                                  type="datetime-local"
+                                  className="w-full bg-secondary/20 border border-border/30 rounded-xl px-3.5 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all text-foreground [color-scheme:dark]"
+                                  value={editEventTime}
+                                  onChange={(e) => setEditEventTime(e.target.value)}
+                                />
+                              </div>
+
                               {/* Raw Source */}
                               <div className="bg-secondary/10 border border-border/30 rounded-2xl p-6 space-y-3">
                                 <div className="flex items-center justify-between">
@@ -1133,6 +1216,30 @@ export default function ModerationQueue() {
                                 </div>
                               </div>
 
+                              {/* Event Type Picker */}
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">
+                                  Event Type Icon
+                                </label>
+                                <div className="flex gap-1.5 flex-wrap">
+                                  {Object.entries(EVENT_TYPE_LABELS).map(([type, { emoji, label }]) => (
+                                    <button
+                                      key={type}
+                                      onClick={() => setPubEventType(type)}
+                                      title={label}
+                                      className={cn(
+                                        "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all",
+                                        pubEventType === type
+                                          ? "bg-emerald-500/20 border-emerald-500 text-emerald-400"
+                                          : "border-border/30 text-muted-foreground hover:border-border/50 hover:text-foreground"
+                                      )}
+                                    >
+                                      <span>{emoji}</span> {label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
                               <div className="space-y-1.5">
                                 <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest flex items-center gap-1.5">
                                   <Link2 className="w-3 h-3" /> Source URL
@@ -1198,6 +1305,22 @@ export default function ModerationQueue() {
                                     />
                                   </div>
                                 )}
+                              </div>
+
+                              {/* Event Time Override */}
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest flex items-center gap-1.5">
+                                  <Clock className="w-3 h-3" /> Event Time
+                                  <span className="text-muted-foreground/30 normal-case font-normal">
+                                    (when this happened on the map timeline)
+                                  </span>
+                                </label>
+                                <input
+                                  type="datetime-local"
+                                  className="w-full bg-secondary/20 border border-border/30 rounded-xl px-3.5 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all text-foreground [color-scheme:dark]"
+                                  value={pubEventTime}
+                                  onChange={(e) => setPubEventTime(e.target.value)}
+                                />
                               </div>
 
                               <div className="text-[10px] text-muted-foreground/40 font-mono pt-2 border-t border-border/10">

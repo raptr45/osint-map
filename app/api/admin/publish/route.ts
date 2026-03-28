@@ -13,10 +13,23 @@ export async function POST(req: Request) {
 
   const userId = session.user.id;
   try {
-    const { id, title, description, lng, lat, severity, sourceUrl } = await req.json();
+    const {
+      id,
+      title,
+      description,
+      lng,
+      lat,
+      severity,
+      sourceUrl,
+      eventType,
+      sourceCreatedAt,
+    } = await req.json();
 
     // 1. Get the pending event
-    const [pending] = await db.select().from(pendingEvents).where(eq(pendingEvents.id, id));
+    const [pending] = await db
+      .select()
+      .from(pendingEvents)
+      .where(eq(pendingEvents.id, id));
     if (!pending) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
@@ -26,20 +39,27 @@ export async function POST(req: Request) {
       title: title || pending.suggestedTitle || "Untitled Event",
       description: description || pending.suggestedDescription || "",
       severity: severity || "medium",
+      eventType: eventType || "unknown",
       imageUrl: pending.imageUrl,
       sourceUrl: sourceUrl || pending.sourceUrl,
       sourceMetadata: pending.sourceMetadata,
-      sourceCreatedAt: pending.sourceCreatedAt,
+      // Admin-set time takes priority; fall back to original source time
+      sourceCreatedAt: sourceCreatedAt
+        ? new Date(sourceCreatedAt)
+        : pending.sourceCreatedAt,
       coordinates: pointSql(lng, lat),
       userId,
     });
 
-    // 3. Delete from pending_events (or mark as published)
+    // 3. Delete from pending_events
     await db.delete(pendingEvents).where(eq(pendingEvents.id, id));
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to publish event:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

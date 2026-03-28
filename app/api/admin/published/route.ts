@@ -14,6 +14,7 @@ export async function GET() {
       title: publishedEvents.title,
       description: publishedEvents.description,
       severity: publishedEvents.severity,
+      eventType: publishedEvents.eventType,
       imageUrl: publishedEvents.imageUrl,
       sourceUrl: publishedEvents.sourceUrl,
       sourceCreatedAt: publishedEvents.sourceCreatedAt,

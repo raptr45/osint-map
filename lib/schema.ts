@@ -14,6 +14,7 @@ export const publishedEvents = pgTable("published_events", {
   description: text("description"),
   sourceUrl: text("source_url"),
   severity: text("severity").$type<"low" | "medium" | "high" | "critical">().default("low").notNull(),
+  eventType: text("event_type").default("unknown"), // manually set or AI-derived
   imageUrl: text("image_url"),
   sourceMetadata: jsonb("source_metadata"),
   coordinates: geometry("coordinates").notNull(),
