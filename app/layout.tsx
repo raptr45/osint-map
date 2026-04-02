@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/provider/theme-provider";
+import { Providers } from "@/components/provider/query-provider";
 
 export default function RootLayout({
   children,
@@ -30,14 +31,16 @@ export default function RootLayout({
       <body
         className={`${jakarta.variable} ${inter.variable} font-sans antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+        <Providers>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );

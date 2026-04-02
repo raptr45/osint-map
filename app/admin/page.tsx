@@ -15,46 +15,32 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-import useSWR from "swr";
 import { formatDistanceToNow } from "date-fns";
+import { useAdminStats } from "@/lib/queries/events";
+import type { AdminActivity } from "@/lib/schemas";
 
-const fetcher = (url: string) => fetch(url).then(res => res.json());
-
-interface AdminStat {
+interface EnrichedStat {
   label: string;
   value: string;
   trend: string;
   icon: LucideIcon;
-  color?: string;
-}
-
-interface AdminActivity {
-  type: string;
-  label: string;
-  time: string | Date;
-  status: string;
-}
-
-interface AdminStatsResponse {
-  stats: AdminStat[];
-  activity: AdminActivity[];
-  chartData: number[];
+  color: string;
 }
 
 export default function AdminOverview() {
-  const { data, isLoading } = useSWR<AdminStatsResponse>("/api/admin/stats", fetcher, {
-    refreshInterval: 10000 // Refresh every 10s
-  });
+  const { data, isLoading } = useAdminStats();
 
-  const stats = data ? data.stats.map((s: AdminStat) => ({
-      ...s,
-      icon: (s.label === "Total Events" ? MapIcon :
-            s.label === "Active Nodes" ? Activity :
-            s.label === "Pending Review" ? ShieldAlert : Users) as LucideIcon,
-             color: s.label === "Total Events" ? "text-blue-500" :
-             s.label === "Active Nodes" ? "text-emerald-500" :
-             s.label === "Pending Review" ? "text-amber-500" : "text-purple-500"
-    })) : [];
+  const stats: EnrichedStat[] = data ? data.stats.map((s) => ({
+    ...s,
+    icon: (s.label === "Total Events" ? MapIcon
+          : s.label === "Active Nodes" ? Activity
+          : s.label === "Pending Review" ? ShieldAlert
+          : Users) as LucideIcon,
+    color: s.label === "Total Events" ? "text-blue-500"
+         : s.label === "Active Nodes" ? "text-emerald-500"
+         : s.label === "Pending Review" ? "text-amber-500"
+         : "text-purple-500",
+  })) : [];
 
   if (isLoading) {
     return (
@@ -73,7 +59,7 @@ export default function AdminOverview() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat: AdminStat) => (
+        {stats.map((stat: EnrichedStat) => (
           <Card key={stat.label} className="p-6 bg-card/40 backdrop-blur-xl border-border/40 hover:bg-card/60 transition-all cursor-default">
             <div className="flex items-center justify-between mb-4">
               <div className={cn("p-2 rounded-lg bg-background/50 border border-border/40", stat.color)}>

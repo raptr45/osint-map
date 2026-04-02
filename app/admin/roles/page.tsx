@@ -5,10 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { User as UserIcon, Loader2, Users, ShieldAlert, Shield, Eye } from "lucide-react";
 import Image from "next/image";
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-
-const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 interface RoleUser {
   id: string;
@@ -20,8 +18,11 @@ interface RoleUser {
 }
 
 export default function RoleRequestsPage() {
-  const { data: users, mutate, isLoading } = useSWR<RoleUser[]>("/api/admin/roles", fetcher, {
-    refreshInterval: 10000
+  const qc = useQueryClient();
+  const { data: users, isLoading } = useQuery<RoleUser[]>({
+    queryKey: ["admin-roles"],
+    queryFn:  () => fetch("/api/admin/roles").then((r) => r.json()),
+    refetchInterval: 10_000,
   });
 
   const handleAction = async (userId: string, action: string) => {
@@ -30,7 +31,7 @@ export default function RoleRequestsPage() {
         method: "PATCH",
         body: JSON.stringify({ userId, action }),
       });
-      mutate();
+      qc.invalidateQueries({ queryKey: ["admin-roles"] });
     } catch (err) {
       console.error(err);
     }

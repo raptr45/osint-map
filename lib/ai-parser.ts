@@ -1,16 +1,12 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import OpenAI from "openai";
 import { getRuntimeProvider } from "@/lib/ai-provider-state";
+import { ParsedIntelSchema, type ParsedIntel } from "@/lib/schemas";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });
 
-export interface ParsedIntel {
-  title: string;
-  description: string;
-  locationName: string | null; // Changed: Extract name, not coords
-  severity: "low" | "medium" | "high" | "critical";
-}
+export type { ParsedIntel };
 
 const SYSTEM_PROMPT = `
 You are an expert OSINT analyzer. 
@@ -48,14 +44,30 @@ async function parseWithOpenAI(rawText: string): Promise<ParsedIntel | null> {
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: rawText }
+        { role: "user", content: rawText },
       ],
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
     });
 
     const content = response.choices[0].message.content;
     if (!content) return null;
-    return JSON.parse(content) as ParsedIntel;
+
+    // ── Runtime validate AI response ──────────────────────────────────────
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      console.error("OpenAI: Failed to parse JSON response from AI");
+      return null;
+    }
+
+    const validated = ParsedIntelSchema.safeParse(parsed);
+    if (!validated.success) {
+      console.error("OpenAI: AI response failed schema validation:", validated.error.format());
+      return null;
+    }
+
+    return validated.data;
   } catch (error: unknown) {
     const err = error as { status?: number };
     if (err.status === 429) throw error;
@@ -73,7 +85,23 @@ async function parseWithGemini(rawText: string): Promise<ParsedIntel | null> {
     const response = await result.response;
     const text = response.text();
     const cleanJson = text.replace(/```json|```/g, "").trim();
-    return JSON.parse(cleanJson);
+
+    // ── Runtime validate AI response ──────────────────────────────────────
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(cleanJson);
+    } catch {
+      console.error("Gemini: Failed to parse JSON response from AI. Raw output:", cleanJson.substring(0, 200));
+      return null;
+    }
+
+    const validated = ParsedIntelSchema.safeParse(parsed);
+    if (!validated.success) {
+      console.error("Gemini: AI response failed schema validation:", validated.error.format());
+      return null;
+    }
+
+    return validated.data;
   } catch (error: unknown) {
     const err = error as { status?: number; message?: string };
     const isQuotaError = err.status === 429 || err.message?.includes("429");

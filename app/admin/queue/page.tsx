@@ -22,38 +22,22 @@ import {
   Activity,
   AlertCircle,
   AlertTriangle,
-  Bomb,
   Brain,
   CheckCircle2,
   ChevronRight,
   Clock,
-  Cross,
-  Crosshair,
-  Dam,
   Edit3,
   ExternalLink,
-  Flame,
   Globe,
   Image as ImageIcon,
   Link2,
   Loader2,
   MapPin,
-  Mic2,
-  Orbit,
-  Radio,
   RefreshCcw,
-  Rocket,
-  Shield,
-  ShieldAlert,
-  Ship,
   ShieldCheck,
-  Skull,
-  Target,
   Trash2,
-  Waves,
   X,
   Zap,
-  type LucideIcon,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import * as React from "react";
@@ -63,87 +47,15 @@ import Map, {
   type MapLayerMouseEvent,
   type MapRef,
 } from "react-map-gl/maplibre";
-import useSWR from "swr";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
-
-interface PendingEvent {
-  id: string;
-  rawSource: string;
-  suggestedTitle: string;
-  suggestedDescription: string;
-  status: "pending" | "processing" | "processed" | "rejected" | "failed";
-  source: string | null;
-  sourceUrl: string | null;
-  imageUrl: string | null;
-  sourceCreatedAt: string | null;
-  createdAt: string;
-  lng: number | null;
-  lat: number | null;
-  externalId: string | null;
-}
-
-interface PublishedEvent {
-  id: string;
-  title: string;
-  description: string;
-  severity: "low" | "medium" | "high" | "critical";
-  eventType: string | null;
-  imageUrl: string | null;
-  sourceUrl: string | null;
-  sourceCreatedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  lng: number | null;
-  lat: number | null;
-}
+import {
+  useAdminQueue,
+  usePublishedEvents,
+  useAdminSettings,
+} from "@/lib/queries/events";
+import { ICON_MAPPING, EVENT_TYPE_LABELS } from "@/lib/constants";
+import type { PendingEvent, PublishedEvent, Severity } from "@/lib/schemas";
 
 const SEVERITY_OPTIONS = ["low", "medium", "high", "critical"] as const;
-type Severity = (typeof SEVERITY_OPTIONS)[number];
-
-const ICON_MAPPING: Record<string, LucideIcon> = {
-  airstrike: Target,
-  explosion: Bomb,
-  artillery: Radio,
-  missile: Rocket,
-  drone: Orbit,
-  armor: Shield,
-  ground_assault: Crosshair,
-  police: ShieldAlert,
-  naval: Ship,
-  fire: Flame,
-  casualties: Skull,
-  wmd: AlertTriangle,
-  cyber: Radio,
-  infrastructure: Dam,
-  disaster: Waves,
-  political: Mic2,
-  protest: Mic2,
-  humanitarian: Cross,
-  unknown: Activity,
-};
-
-const EVENT_TYPE_LABELS: Record<string, { label: string }> = {
-  airstrike:      { label: "Airstrike" },
-  explosion:      { label: "Explosion" },
-  artillery:      { label: "Artillery" },
-  missile:        { label: "Missile" },
-  drone:          { label: "Drone" },
-  armor:          { label: "Armor" },
-  ground_assault: { label: "Ground" },
-  police:         { label: "Police" },
-  naval:          { label: "Naval" },
-  fire:           { label: "Fire" },
-  casualties:     { label: "Casualties" },
-  wmd:            { label: "WMD" },
-  cyber:          { label: "Cyber" },
-  infrastructure: { label: "Infra" },
-  disaster:       { label: "Disaster" },
-  political:      { label: "Political" },
-  protest:        { label: "Protest" },
-  humanitarian:   { label: "Aid" },
-  unknown:        { label: "Unknown" },
-};
 
 const severityColor = (s: Severity) =>
   ({
@@ -170,24 +82,16 @@ export default function ModerationQueue() {
   // Pending queue
   const {
     data: queue,
-    mutate,
+    refetch: mutate,
     isLoading,
-  } = useSWR<PendingEvent[]>("/api/admin/queue", fetcher, {
-    refreshInterval: 8000,
-  });
+  } = useAdminQueue();
   // Published events
   const {
     data: published,
-    mutate: mutatePublished,
+    refetch: mutatePublished,
     isLoading: isLoadingPublished,
-  } = useSWR<PublishedEvent[]>("/api/admin/published", fetcher, {
-    revalidateOnFocus: false,
-  });
-  const { data: settings, mutate: mutateSettings } = useSWR(
-    "/api/admin/settings",
-    fetcher,
-    { revalidateOnFocus: false }
-  );
+  } = usePublishedEvents();
+  const { data: settings, refetch: mutateSettings } = useAdminSettings();
 
   // Selection
   const [selectedPendingId, setSelectedPendingId] = React.useState<

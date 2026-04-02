@@ -3,6 +3,7 @@ import { ingestSources, pendingEvents } from "@/lib/schema";
 import { eq, sql, gte } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/admin-check";
+import { AddSourceBodySchema, ToggleSourceBodySchema } from "@/lib/schemas";
 
 export async function GET() {
   if (!(await isAdmin())) return new NextResponse("Unauthorized", { status: 401 });
@@ -34,25 +35,54 @@ export async function GET() {
 
 export async function POST(req: Request) {
   if (!(await isAdmin())) return new NextResponse("Unauthorized", { status: 401 });
-  const { type, value, name } = await req.json();
-  if (!type || !value) return new NextResponse("Missing fields", { status: 400 });
 
-  const [newSource] = await db.insert(ingestSources).values({
-    type,
-    value,
-    name: name || value,
-    isActive: true,
-  }).returning();
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return new NextResponse("Invalid JSON body", { status: 400 });
+  }
+
+  const result = AddSourceBodySchema.safeParse(body);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: "Validation failed", details: result.error.format() },
+      { status: 400 }
+    );
+  }
+
+  const { type, value, name } = result.data;
+
+  const [newSource] = await db
+    .insert(ingestSources)
+    .values({ type, value, name: name || value, isActive: true })
+    .returning();
 
   return NextResponse.json(newSource);
 }
 
 export async function PATCH(req: Request) {
   if (!(await isAdmin())) return new NextResponse("Unauthorized", { status: 401 });
-  const { id, isActive } = await req.json();
-  if (!id || typeof isActive !== "boolean") return new NextResponse("Missing fields", { status: 400 });
 
-  const [updated] = await db.update(ingestSources)
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return new NextResponse("Invalid JSON body", { status: 400 });
+  }
+
+  const result = ToggleSourceBodySchema.safeParse(body);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: "Validation failed", details: result.error.format() },
+      { status: 400 }
+    );
+  }
+
+  const { id, isActive } = result.data;
+
+  const [updated] = await db
+    .update(ingestSources)
     .set({ isActive })
     .where(eq(ingestSources.id, id))
     .returning();
@@ -62,6 +92,7 @@ export async function PATCH(req: Request) {
 
 export async function DELETE(req: Request) {
   if (!(await isAdmin())) return new NextResponse("Unauthorized", { status: 401 });
+
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   if (!id) return new NextResponse("Missing id", { status: 400 });

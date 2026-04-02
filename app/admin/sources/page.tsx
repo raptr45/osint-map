@@ -1,7 +1,5 @@
 "use client";
-
 import { useState } from "react";
-import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -11,19 +9,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-
-interface Source {
-  id: string;
-  type: "telegram" | "rss" | "x" | "custom";
-  value: string;
-  name: string | null;
-  isActive: boolean;
-  lastFetchedAt: string | null;
-  createdAt: string;
-  signalsLast24h: number;
-}
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import { useIngestSources, useToggleSourceMutation, queryKeys } from "@/lib/queries/events";
+import type { IngestSource } from "@/lib/schemas";
+import { useQueryClient } from "@tanstack/react-query";
 
 const SOURCE_STYLES: Record<string, { bg: string; border: string; text: string; glow: string }> = {
   telegram: { bg: "bg-blue-500/10",   border: "border-blue-500/20",   text: "text-blue-400",    glow: "bg-blue-500/30" },
@@ -47,11 +35,13 @@ const SOURCE_LINK: Record<string, (value: string) => string> = {
 };
 
 export default function SourcesPage() {
-  const { data: sources, mutate, isLoading } = useSWR<Source[]>("/api/admin/sources", fetcher);
+  const { data: sources, isLoading } = useIngestSources();
+  const toggleMutation = useToggleSourceMutation();
   const [newValue, setNewValue] = useState("");
-  const [newType, setNewType] = useState<Source["type"]>("telegram");
+  const [newType, setNewType] = useState<IngestSource["type"]>("telegram");
   const [isAdding, setIsAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const qc = useQueryClient();
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -65,7 +55,7 @@ export default function SourcesPage() {
         body: JSON.stringify({ type: newType, value: newValue, name: newValue }),
       });
       setNewValue("");
-      mutate();
+      qc.invalidateQueries({ queryKey: queryKeys.ingestSources() });
     } finally {
       setIsAdding(false);
     }
@@ -75,7 +65,7 @@ export default function SourcesPage() {
     setDeletingId(id);
     try {
       await fetch(`/api/admin/sources?id=${id}`, { method: "DELETE" });
-      mutate();
+      qc.invalidateQueries({ queryKey: queryKeys.ingestSources() });
     } finally {
       setDeletingId(null);
     }
@@ -84,12 +74,7 @@ export default function SourcesPage() {
   const handleToggle = async (id: string, current: boolean) => {
     setTogglingId(id);
     try {
-      await fetch("/api/admin/sources", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, isActive: !current }),
-      });
-      mutate();
+      await toggleMutation.mutateAsync({ id, isActive: !current });
     } finally {
       setTogglingId(null);
     }
@@ -125,7 +110,7 @@ export default function SourcesPage() {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {sources.map((source) => {
+              {(sources ?? []).map((source: IngestSource) => {
                 const styles = SOURCE_STYLES[source.type] ?? SOURCE_STYLES.custom;
                 const Icon = SOURCE_ICONS[source.type] ?? Globe;
                 const link = SOURCE_LINK[source.type]?.(source.value);
@@ -258,7 +243,7 @@ export default function SourcesPage() {
                   </label>
                   <select
                     value={newType}
-                    onChange={(e) => setNewType(e.target.value as Source["type"])}
+                    onChange={(e) => setNewType(e.target.value as IngestSource["type"])}
                     className="w-full bg-background/60 border border-border/40 shadow-inner p-4 rounded-xl text-xs font-bold uppercase tracking-wide outline-none focus:ring-1 focus:ring-primary/50 transition-all font-sans text-foreground"
                   >
                     <option value="telegram">MTProto Network (Telegram)</option>

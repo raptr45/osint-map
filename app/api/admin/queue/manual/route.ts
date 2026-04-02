@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { hasClearance } from "@/lib/admin-check";
 import { processIngestion } from "@/lib/ingest-pipeline";
+import { ManualIngestBodySchema } from "@/lib/schemas";
 
 /**
  * Allows authorized staff to manually ingest a raw report.
@@ -11,17 +12,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
+  let body: unknown;
   try {
-    const { rawText, source, sourceUrl, imageUrl } = await req.json();
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
-    if (!rawText || rawText.length < 10) {
-      return NextResponse.json({ error: "Report text too short (min 10 chars)" }, { status: 400 });
-    }
+  const result = ManualIngestBodySchema.safeParse(body);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: "Validation failed", details: result.error.format() },
+      { status: 400 }
+    );
+  }
 
+  const { rawText, source, sourceUrl, imageUrl } = result.data;
+
+  try {
     const eventId = await processIngestion(rawText, {
       source: source || "manual_admin",
-      sourceUrl,
-      imageUrl,
+      sourceUrl: sourceUrl ?? undefined,
+      imageUrl:  imageUrl ?? undefined,
       sourceCreatedAt: new Date(),
     });
 
