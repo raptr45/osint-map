@@ -64,3 +64,9 @@ The project is built for independence and cost-efficiency:
 - **Tiles**: Served via `OpenFreeMap` (Bright style).
 - **Engine**: `MapLibre GL` (Open-source alternative to Mapbox).
 - **No Dependencies**: No paid proprietary APIs (Mapbox/Google) are required for core functionality.
+
+## 💻 6. Frontend State & Validation
+The client-side architecture enforces strict boundaries between remote server state, local UI state, and data validation:
+- **Zod Validation**: A single source of truth (`lib/schemas.ts`) ensures that all data entering the system—whether from an AI `ParsedIntel` response, an admin's UI editor, or an API call—is stringently validated for types, bounds, and enums BEFORE saving to the database.
+- **TanStack Query (@tanstack/react-query)**: Manages all remote state (fetching from APIs). It auto-caches data, dedupes identical requests, and gracefully invalidates caches when mutations (like publishing an event) occur. SWR has been completely removed in favor of this robust asynchronous state manager.
+- **Zustand (`useMapStore`, `useQueueStore`)**: Solves "prop drilling" and component bloat. Local presentation states (like map filters, moderation queues, and active forms) exist globally. Disparate components seamlessly sync without giant chained props.

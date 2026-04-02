@@ -53,5 +53,3 @@ For production, ensure these are set:
 ---
 
 Built for clarity, speed, and strategic awareness.
-
-<!-- edited by: ragibalasad -->

@@ -2,7 +2,6 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -24,49 +23,26 @@ import {
   AlertTriangle,
   Brain,
   CheckCircle2,
-  ChevronRight,
-  Clock,
   Edit3,
-  ExternalLink,
-  Globe,
-  Image as ImageIcon,
-  Link2,
   Loader2,
-  MapPin,
   RefreshCcw,
   ShieldCheck,
   Trash2,
-  X,
-  Zap,
 } from "lucide-react";
-import { useTheme } from "next-themes";
 import * as React from "react";
-import Map, {
-  Marker,
-  NavigationControl,
-  type MapLayerMouseEvent,
-  type MapRef,
-} from "react-map-gl/maplibre";
+import type { MapRef } from "react-map-gl/maplibre";
 import {
   useAdminQueue,
   usePublishedEvents,
   useAdminSettings,
 } from "@/lib/queries/events";
-import { ICON_MAPPING, EVENT_TYPE_LABELS } from "@/lib/constants";
-import type { PendingEvent, PublishedEvent, Severity } from "@/lib/schemas";
-
-const SEVERITY_OPTIONS = ["low", "medium", "high", "critical"] as const;
-
-const severityColor = (s: Severity) =>
-  ({
-    critical: "bg-red-500/15 text-red-500 border-red-500/30",
-    high: "bg-orange-500/15 text-orange-500 border-orange-500/30",
-    medium: "bg-yellow-500/15 text-yellow-500 border-yellow-500/30",
-    low: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-  }[s] ?? "bg-secondary text-secondary-foreground");
+import { PendingList } from "@/components/admin/pending-list";
+import { PublishedList } from "@/components/admin/published-list";
+import { ModerationPanel } from "@/components/admin/moderation-panel";
+import { QueueMap } from "@/components/admin/queue-map";
+import { useQueueStore } from "@/lib/stores/queue-store";
 
 export default function ModerationQueue() {
-  const { theme } = useTheme();
   const { data: session } = authClient.useSession();
   const role =
     ((session?.user as Record<string, unknown>)?.role as string) || "user";
@@ -109,30 +85,42 @@ export default function ModerationQueue() {
     [published, selectedPublishedId]
   );
 
-  // Editable fields (pending)
-  const [editTitle, setEditTitle] = React.useState("");
-  const [editDesc, setEditDesc] = React.useState("");
-  const [editSourceUrl, setEditSourceUrl] = React.useState("");
-  const [editSeverity, setEditSeverity] = React.useState<Severity>("medium");
-  const [editEventType, setEditEventType] = React.useState("unknown");
-  const [editEventTime, setEditEventTime] = React.useState(""); // ISO string for sourceCreatedAt override
-  const [editPos, setEditPos] = React.useState<{
-    lng: number;
-    lat: number;
-  } | null>(null);
+  // Editable fields (via Zustand store)
+  const {
+    editTitle,
+    editDesc,
+    editSourceUrl,
+    editSeverity,
+    editEventType,
+    editEventTime,
+    editPos,
 
-  // Editable fields (published)
-  const [pubTitle, setPubTitle] = React.useState("");
-  const [pubDesc, setPubDesc] = React.useState("");
-  const [pubSourceUrl, setPubSourceUrl] = React.useState("");
-  const [pubImageUrl, setPubImageUrl] = React.useState("");
-  const [pubSeverity, setPubSeverity] = React.useState<Severity>("medium");
-  const [pubEventType, setPubEventType] = React.useState("unknown");
-  const [pubEventTime, setPubEventTime] = React.useState(""); // ISO string for sourceCreatedAt override
-  const [pubPos, setPubPos] = React.useState<{
-    lng: number;
-    lat: number;
-  } | null>(null);
+    pubTitle,
+    pubDesc,
+    pubSourceUrl,
+    pubImageUrl,
+    pubSeverity,
+    pubEventType,
+    pubEventTime,
+    pubPos,
+
+    setEditTitle,
+    setEditDesc,
+    setEditSourceUrl,
+    setEditSeverity,
+    setEditEventType,
+    setEditEventTime,
+    setEditPos,
+
+    setPubTitle,
+    setPubDesc,
+    setPubSourceUrl,
+    setPubImageUrl,
+    setPubSeverity,
+    setPubEventType,
+    setPubEventTime,
+    setPubPos,
+  } = useQueueStore();
 
   // UI state
   const [isPublishing, setIsPublishing] = React.useState(false);
@@ -212,7 +200,7 @@ export default function ModerationQueue() {
       }
       lastPendingId.current = selectedPending.id;
     }
-  }, [selectedPending]);
+  }, [selectedPending, setEditTitle, setEditDesc, setEditPos, setEditSourceUrl, setEditSeverity, setEditEventType, setEditEventTime]);
 
   // Sync published edit state
   React.useEffect(() => {
@@ -258,7 +246,7 @@ export default function ModerationQueue() {
       }
       lastPublishedId.current = selectedPublished.id;
     }
-  }, [selectedPublished]);
+  }, [selectedPublished, setPubTitle, setPubDesc, setPubPos, setPubSourceUrl, setPubImageUrl, setPubSeverity, setPubEventType, setPubEventTime]);
 
   // Live stream for new events
   React.useEffect(() => {
@@ -270,48 +258,6 @@ export default function ModerationQueue() {
     };
     return () => es.close();
   }, [mutate]);
-
-  // Group pending by date
-  const groupedQueue = React.useMemo(() => {
-    if (!queue) return {};
-    const sorted = [...queue].sort((a, b) => {
-      if (sortBy === "source")
-        return (a.source || "").localeCompare(b.source || "");
-      return (
-        new Date(b.sourceCreatedAt || b.createdAt).getTime() -
-        new Date(a.sourceCreatedAt || a.createdAt).getTime()
-      );
-    });
-    const groups: Record<string, PendingEvent[]> = {};
-    sorted.forEach((item) => {
-      const date = new Date(
-        item.sourceCreatedAt || item.createdAt
-      ).toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-      });
-      if (!groups[date]) groups[date] = [];
-      groups[date].push(item);
-    });
-    return groups;
-  }, [queue, sortBy]);
-
-  // Group published by date
-  const groupedPublished = React.useMemo(() => {
-    if (!published) return {};
-    const groups: Record<string, PublishedEvent[]> = {};
-    [...published].forEach((item) => {
-      const date = new Date(item.createdAt).toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-      });
-      if (!groups[date]) groups[date] = [];
-      groups[date].push(item);
-    });
-    return groups;
-  }, [published]);
 
   const formatRelativeTime = (d: string) => {
     const diff = Math.floor((Date.now() - new Date(d).getTime()) / 1000);
@@ -489,8 +435,6 @@ export default function ModerationQueue() {
 
   const isSelected =
     activeTab === "pending" ? !!selectedPending : !!selectedPublished;
-  const mapClickPos = activeTab === "pending" ? editPos : pubPos;
-  const setMapClickPos = activeTab === "pending" ? setEditPos : setPubPos;
 
   return (
     <div className="h-screen flex flex-col bg-background font-sans overflow-hidden">
@@ -678,208 +622,29 @@ export default function ModerationQueue() {
                   </div>
                 )}
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-5">
+                <div className="flex-1 overflow-hidden p-0">
                   {/* PENDING LIST */}
                   {activeTab === "pending" && (
-                    <>
-                      {isLoading && (
-                        <div className="flex items-center justify-center py-20">
-                          <Loader2 className="animate-spin w-8 h-8 text-primary/20" />
-                        </div>
-                      )}
-                      {!isLoading &&
-                        Object.entries(groupedQueue).map(([date, items]) => (
-                          <div key={date} className="space-y-2">
-                            <div className="sticky top-0 z-10 bg-background/60 backdrop-blur-xl py-1.5 px-1 border-b border-border/20 flex items-center justify-between">
-                              <span className="text-[10px] font-black tracking-widest uppercase text-primary/80 flex items-center gap-1.5">
-                                <Activity className="w-3 h-3" />
-                                {date}
-                              </span>
-                              <Badge
-                                variant="outline"
-                                className="h-4 text-[9px] border-border/30 opacity-50 px-1"
-                              >
-                                {items.length} MSG
-                              </Badge>
-                            </div>
-                            {items.map((item) => (
-                              <div
-                                key={item.id}
-                                className={cn(
-                                  "p-3 rounded-xl cursor-pointer transition-all border group relative overflow-hidden",
-                                  selectedPendingId === item.id
-                                    ? "bg-primary/10 border-primary/40 ring-1 ring-primary/20"
-                                    : "bg-background/40 hover:bg-secondary/30 border-border/20"
-                                )}
-                                onClick={() => setSelectedPendingId(item.id)}
-                              >
-                                <div className="flex items-start justify-between gap-2 mb-1.5">
-                                  <h3
-                                    className={cn(
-                                      "font-black text-xs tracking-tight line-clamp-2 flex-1 uppercase leading-snug",
-                                      selectedPendingId === item.id
-                                        ? "text-primary"
-                                        : item.status === "failed"
-                                        ? "text-destructive/80"
-                                        : item.suggestedTitle
-                                        ? "text-foreground"
-                                        : "text-muted-foreground"
-                                    )}
-                                  >
-                                    {item.status === "processing"
-                                      ? "PROBING SIGNAL..."
-                                      : item.status === "failed"
-                                      ? "ENRICHMENT FAILED"
-                                      : item.suggestedTitle || "ANALYZING..."}
-                                  </h3>
-                                  {item.status === "processing" ? (
-                                    <Loader2 className="w-3 h-3 text-primary animate-spin shrink-0" />
-                                  ) : item.lng ? (
-                                    <div className="w-3 h-3 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
-                                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                    </div>
-                                  ) : (
-                                    <AlertTriangle className="w-3 h-3 text-destructive/60 shrink-0 animate-pulse" />
-                                  )}
-                                </div>
-                                <p className="text-[11px] text-muted-foreground/60 line-clamp-2 leading-relaxed">
-                                  {item.rawSource}
-                                </p>
-                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-border/10">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] font-black text-muted-foreground/40 tabular-nums">
-                                      {formatRelativeTime(
-                                        item.sourceCreatedAt || item.createdAt
-                                      )}
-                                    </span>
-                                    {item.source && (
-                                      <Badge
-                                        variant="outline"
-                                        className="h-3.5 text-[9px] px-1.5 font-black border-primary/20 text-primary bg-primary/5"
-                                      >
-                                        {item.source}
-                                      </Badge>
-                                    )}
-                                    {item.imageUrl && (
-                                      <ImageIcon className="w-2.5 h-2.5 text-muted-foreground/30" />
-                                    )}
-                                    {item.sourceUrl && (
-                                      <Globe className="w-2.5 h-2.5 text-primary/40" />
-                                    )}
-                                  </div>
-                                  <ChevronRight
-                                    className={cn(
-                                      "w-3 h-3 transition-all text-muted-foreground/20",
-                                      selectedPendingId === item.id
-                                        ? "text-primary translate-x-0.5"
-                                        : "group-hover:text-primary/40"
-                                    )}
-                                  />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ))}
-                      {!isLoading && (!queue || queue.length === 0) && (
-                        <div className="flex flex-col items-center justify-center py-24 opacity-20">
-                          <Zap className="w-8 h-8 mb-3" />
-                          <p className="text-[11px] font-black uppercase tracking-widest">
-                            Sector Neutral
-                          </p>
-                        </div>
-                      )}
-                    </>
+                    <PendingList
+                      queue={queue}
+                      isLoading={isLoading}
+                      selectedPendingId={selectedPendingId}
+                      onSelect={(id) => setSelectedPendingId(id)}
+                      sortBy={sortBy}
+                      onSortChange={setSortBy}
+                      formatRelativeTime={formatRelativeTime}
+                    />
                   )}
 
                   {/* PUBLISHED LIST */}
                   {activeTab === "published" && (
-                    <>
-                      {isLoadingPublished && (
-                        <div className="flex items-center justify-center py-20">
-                          <Loader2 className="animate-spin w-8 h-8 text-primary/20" />
-                        </div>
-                      )}
-                      {!isLoadingPublished &&
-                        Object.entries(groupedPublished).map(
-                          ([date, items]) => (
-                            <div key={date} className="space-y-2">
-                              <div className="sticky top-0 z-10 bg-background/60 backdrop-blur-xl py-1.5 px-1 border-b border-border/20 flex items-center justify-between">
-                                <span className="text-[10px] font-black tracking-widest uppercase text-emerald-500/80 flex items-center gap-1.5">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  {date}
-                                </span>
-                                <Badge
-                                  variant="outline"
-                                  className="h-4 text-[9px] border-border/30 opacity-50 px-1"
-                                >
-                                  {items.length}
-                                </Badge>
-                              </div>
-                              {items.map((item) => (
-                                <div
-                                  key={item.id}
-                                  className={cn(
-                                    "p-3 rounded-xl cursor-pointer transition-all border group",
-                                    selectedPublishedId === item.id
-                                      ? "bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/20"
-                                      : "bg-background/40 hover:bg-secondary/30 border-border/20"
-                                  )}
-                                  onClick={() =>
-                                    setSelectedPublishedId(item.id)
-                                  }
-                                >
-                                  <div className="flex items-start justify-between gap-2 mb-1.5">
-                                    <h3 className="font-black text-xs tracking-tight line-clamp-2 flex-1 uppercase leading-snug text-foreground">
-                                      {item.title}
-                                    </h3>
-                                    <span
-                                      className={cn(
-                                        "text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase border shrink-0",
-                                        severityColor(item.severity)
-                                      )}
-                                    >
-                                      {item.severity}
-                                    </span>
-                                  </div>
-                                  <p className="text-[11px] text-muted-foreground/60 line-clamp-1 leading-relaxed">
-                                    {item.description}
-                                  </p>
-                                  <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-border/10">
-                                    <span className="text-[10px] font-black text-muted-foreground/40 tabular-nums">
-                                      {formatRelativeTime(item.createdAt)}
-                                    </span>
-                                    <div className="flex items-center gap-1.5">
-                                      {item.imageUrl && (
-                                        <ImageIcon className="w-2.5 h-2.5 text-muted-foreground/30" />
-                                      )}
-                                      {item.sourceUrl && (
-                                        <Globe className="w-2.5 h-2.5 text-primary/40" />
-                                      )}
-                                      <ChevronRight
-                                        className={cn(
-                                          "w-3 h-3 transition-all text-muted-foreground/20",
-                                          selectedPublishedId === item.id
-                                            ? "text-emerald-500 translate-x-0.5"
-                                            : "group-hover:text-emerald-500/40"
-                                        )}
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )
-                        )}
-                      {!isLoadingPublished &&
-                        (!published || published.length === 0) && (
-                          <div className="flex flex-col items-center justify-center py-24 opacity-20">
-                            <CheckCircle2 className="w-8 h-8 mb-3" />
-                            <p className="text-[11px] font-black uppercase tracking-widest">
-                              No Published Events
-                            </p>
-                          </div>
-                        )}
-                    </>
+                    <PublishedList
+                      published={published}
+                      isLoading={isLoadingPublished}
+                      selectedPublishedId={selectedPublishedId}
+                      onSelect={(id) => setSelectedPublishedId(id)}
+                      formatRelativeTime={formatRelativeTime}
+                    />
                   )}
                 </div>
               </div>
@@ -912,495 +677,24 @@ export default function ModerationQueue() {
                       minSize="35"
                       id="queue-details-panel"
                     >
-                      <div className="w-full h-full flex flex-col border-r border-border/20">
-                        <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-6">
-                          {/* PENDING DETAILS */}
-                          {activeTab === "pending" && selectedPending && (
-                            <>
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <div
-                                    className={cn(
-                                      "w-2.5 h-2.5 rounded-full",
-                                      selectedPending.status === "failed"
-                                        ? "bg-destructive"
-                                        : "bg-primary shadow-[0_0_12px_rgba(var(--primary),0.8)]"
-                                    )}
-                                  />
-                                  <h2 className="text-xs font-black uppercase tracking-widest text-foreground/70">
-                                    {selectedPending.status === "failed"
-                                      ? "Enrichment Failure"
-                                      : "Enrichment Protocol"}
-                                  </h2>
-                                </div>
-                                {selectedPending.status === "failed" && (
-                                  <Badge
-                                    variant="destructive"
-                                    className="animate-pulse text-xs font-black uppercase"
-                                  >
-                                    AI Failed
-                                  </Badge>
-                                )}
-                              </div>
-
-                              {selectedPending.status === "failed" && (
-                                <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 flex items-center gap-3 text-destructive">
-                                  <AlertTriangle className="w-4 h-4 shrink-0" />
-                                  <p className="text-xs font-medium">
-                                    AI enrichment failed. Manual entry required
-                                    below.
-                                  </p>
-                                </div>
-                              )}
-
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">
-                                  Assigned Title
-                                </label>
-                                <input
-                                  className="w-full bg-secondary/20 border border-border/30 rounded-xl p-3.5 text-sm font-black focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
-                                  value={editTitle}
-                                  onChange={(e) => setEditTitle(e.target.value)}
-                                  placeholder="Pending designation..."
-                                />
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">
-                                  Summary SITREP
-                                </label>
-                                <textarea
-                                  className="w-full bg-secondary/20 border border-border/30 rounded-xl p-3.5 text-sm h-36 resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all leading-relaxed font-medium"
-                                  value={editDesc}
-                                  onChange={(e) => setEditDesc(e.target.value)}
-                                  placeholder="Intelligence summary..."
-                                />
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                  <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest flex items-center gap-1.5">
-                                    <Link2 className="w-3 h-3" /> Source URL
-                                  </label>
-                                  <input
-                                    className="w-full bg-secondary/20 border border-border/30 rounded-xl px-3.5 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
-                                    value={editSourceUrl}
-                                    onChange={(e) =>
-                                      setEditSourceUrl(e.target.value)
-                                    }
-                                    placeholder="https://t.me/..."
-                                  />
-                                </div>
-                                <div className="space-y-1.5">
-                                  <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">
-                                    Severity
-                                  </label>
-                                  <div className="flex gap-1.5 flex-wrap">
-                                    {SEVERITY_OPTIONS.map((s) => (
-                                      <button
-                                        key={s}
-                                        onClick={() => setEditSeverity(s)}
-                                        className={cn(
-                                          "px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all",
-                                          editSeverity === s
-                                            ? severityColor(s)
-                                            : "border-border/30 text-muted-foreground hover:border-border/50"
-                                        )}
-                                      >
-                                        {s}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Event Type Picker */}
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">
-                                  Event Type Icon
-                                </label>
-                                <div className="flex gap-1.5 flex-wrap">
-                                  {Object.entries(EVENT_TYPE_LABELS).map(
-                                    ([type, { label }]) => {
-                                      const Icon = ICON_MAPPING[type] || Activity;
-                                      return (
-                                        <button
-                                          key={type}
-                                          onClick={() => setEditEventType(type)}
-                                          title={label}
-                                          className={cn(
-                                            "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all",
-                                            editEventType === type
-                                              ? "bg-primary/20 border-primary text-primary"
-                                              : "border-border/30 text-muted-foreground hover:border-border/50 hover:text-foreground"
-                                          )}
-                                        >
-                                          <Icon className="w-3 h-3" /> {label}
-                                        </button>
-                                      );
-                                    }
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Event Time Override */}
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest flex items-center gap-1.5">
-                                  <Clock className="w-3 h-3" /> Event Time
-                                  <span className="text-muted-foreground/30 normal-case font-normal">
-                                    (overrides source time on map)
-                                  </span>
-                                </label>
-                                <input
-                                  type="datetime-local"
-                                  className="w-full bg-secondary/20 border border-border/30 rounded-xl px-3.5 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all text-foreground [color-scheme:dark]"
-                                  value={editEventTime}
-                                  onChange={(e) =>
-                                    setEditEventTime(e.target.value)
-                                  }
-                                />
-                              </div>
-
-                              {/* Raw Source */}
-                              <div className="bg-secondary/10 border border-border/30 rounded-2xl p-6 space-y-3">
-                                <div className="flex items-center justify-between">
-                                  <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">
-                                    Signal Source Content
-                                  </label>
-                                  <div className="flex items-center gap-2">
-                                    {(selectedPending.sourceUrl ||
-                                      editSourceUrl) && (
-                                      <a
-                                        href={
-                                          selectedPending.sourceUrl ||
-                                          editSourceUrl
-                                        }
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-1 text-xs font-black border border-primary/20 text-primary bg-primary/5 hover:bg-primary/10 px-2 py-0.5 rounded-full transition-all"
-                                      >
-                                        <ExternalLink className="w-3 h-3" />{" "}
-                                        Open Source
-                                      </a>
-                                    )}
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs font-black border-emerald-500/20 text-emerald-500 bg-emerald-500/5"
-                                    >
-                                      ENCRYPTED
-                                    </Badge>
-                                  </div>
-                                </div>
-                                <p className="text-xs leading-relaxed text-muted-foreground font-medium italic">
-                                  &ldquo;{selectedPending.rawSource}&rdquo;
-                                </p>
-                                {selectedPending.imageUrl && (
-                                  <div className="rounded-xl overflow-hidden border border-border/20">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      src={selectedPending.imageUrl}
-                                      alt="Signal Visual"
-                                      className="w-full max-h-48 object-cover"
-                                    />
-                                    <div className="p-2 bg-black/20 flex items-center gap-2">
-                                      <ImageIcon className="w-3 h-3 text-muted-foreground" />
-                                      <a
-                                        href={selectedPending.imageUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-[10px] font-black text-primary hover:underline"
-                                      >
-                                        Full Resolution
-                                      </a>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </>
-                          )}
-
-                          {/* PUBLISHED DETAILS */}
-                          {activeTab === "published" && selectedPublished && (
-                            <>
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
-                                  <h2 className="text-xs font-black uppercase tracking-widest text-foreground/70">
-                                    Event Editor
-                                  </h2>
-                                </div>
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs font-black border-emerald-500/30 text-emerald-500 bg-emerald-500/5"
-                                >
-                                  PUBLISHED
-                                </Badge>
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">
-                                  Title
-                                </label>
-                                <input
-                                  className="w-full bg-secondary/20 border border-border/30 rounded-xl p-3.5 text-sm font-black focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all"
-                                  value={pubTitle}
-                                  onChange={(e) => setPubTitle(e.target.value)}
-                                />
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">
-                                  Description
-                                </label>
-                                <textarea
-                                  className="w-full bg-secondary/20 border border-border/30 rounded-xl p-3.5 text-sm h-28 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all leading-relaxed font-medium"
-                                  value={pubDesc}
-                                  onChange={(e) => setPubDesc(e.target.value)}
-                                />
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">
-                                  Severity
-                                </label>
-                                <div className="flex gap-1.5 flex-wrap">
-                                  {SEVERITY_OPTIONS.map((s) => (
-                                    <button
-                                      key={s}
-                                      onClick={() => setPubSeverity(s)}
-                                      className={cn(
-                                        "px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all",
-                                        pubSeverity === s
-                                          ? severityColor(s)
-                                          : "border-border/30 text-muted-foreground hover:border-border/50"
-                                      )}
-                                    >
-                                      {s}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Event Type Picker */}
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">
-                                  Event Type Icon
-                                </label>
-                                <div className="flex gap-1.5 flex-wrap">
-                                  {Object.entries(EVENT_TYPE_LABELS).map(
-                                    ([type, { label }]) => {
-                                      const Icon = ICON_MAPPING[type] || Activity;
-                                      return (
-                                        <button
-                                          key={type}
-                                          onClick={() => setPubEventType(type)}
-                                          title={label}
-                                          className={cn(
-                                            "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border transition-all",
-                                            pubEventType === type
-                                              ? "bg-emerald-500/20 border-emerald-500 text-emerald-400"
-                                              : "border-border/30 text-muted-foreground hover:border-border/50 hover:text-foreground"
-                                          )}
-                                        >
-                                          <Icon className="w-3 h-3" /> {label}
-                                        </button>
-                                      );
-                                    }
-                                  )}
-                                </div>
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest flex items-center gap-1.5">
-                                  <Link2 className="w-3 h-3" /> Source URL
-                                </label>
-                                <div className="flex gap-2">
-                                  <input
-                                    className="flex-1 bg-secondary/20 border border-border/30 rounded-xl px-3.5 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all"
-                                    value={pubSourceUrl}
-                                    onChange={(e) =>
-                                      setPubSourceUrl(e.target.value)
-                                    }
-                                    placeholder="https://t.me/..."
-                                  />
-                                  {pubSourceUrl && (
-                                    <a
-                                      href={pubSourceUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-center justify-center w-10 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all"
-                                    >
-                                      <ExternalLink className="w-3.5 h-3.5 text-primary" />
-                                    </a>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest flex items-center gap-1.5">
-                                  <ImageIcon className="w-3 h-3" /> Image URL
-                                </label>
-                                <div className="flex gap-2">
-                                  <input
-                                    className="flex-1 bg-secondary/20 border border-border/30 rounded-xl px-3.5 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all"
-                                    value={pubImageUrl}
-                                    onChange={(e) =>
-                                      setPubImageUrl(e.target.value)
-                                    }
-                                    placeholder="https://blob.vercel.app/..."
-                                  />
-                                  {pubImageUrl && (
-                                    <a
-                                      href={pubImageUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-center justify-center w-10 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all"
-                                    >
-                                      <ExternalLink className="w-3.5 h-3.5 text-primary" />
-                                    </a>
-                                  )}
-                                </div>
-                                {pubImageUrl && (
-                                  <div className="rounded-xl overflow-hidden border border-border/20 mt-2">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                      src={pubImageUrl}
-                                      alt="Preview"
-                                      className="w-full max-h-36 object-cover"
-                                      onError={(e) => {
-                                        (
-                                          e.target as HTMLImageElement
-                                        ).style.display = "none";
-                                      }}
-                                    />
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Event Time Override */}
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest flex items-center gap-1.5">
-                                  <Clock className="w-3 h-3" /> Event Time
-                                  <span className="text-muted-foreground/30 normal-case font-normal">
-                                    (when this happened on the map timeline)
-                                  </span>
-                                </label>
-                                <input
-                                  type="datetime-local"
-                                  className="w-full bg-secondary/20 border border-border/30 rounded-xl px-3.5 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all text-foreground [color-scheme:dark]"
-                                  value={pubEventTime}
-                                  onChange={(e) =>
-                                    setPubEventTime(e.target.value)
-                                  }
-                                />
-                              </div>
-
-                              <div className="text-[10px] text-muted-foreground/40 font-mono pt-2 border-t border-border/10">
-                                ID: {selectedPublished.id.slice(0, 8)}... ·
-                                Published{" "}
-                                {formatRelativeTime(
-                                  selectedPublished.createdAt
-                                )}{" "}
-                                · Updated{" "}
-                                {formatRelativeTime(
-                                  selectedPublished.updatedAt
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </div>
-
-                        {/* Action Bar */}
-                        <div className="flex gap-3 p-4 lg:p-5 bg-card/60 backdrop-blur-2xl border-t border-border/20 items-center justify-between flex-row-reverse shrink-0">
-                          {activeTab === "pending" && selectedPending && (
-                            <div className="flex gap-3">
-                              {canModerate && (
-                                <>
-                                  <Button
-                                    variant="outline"
-                                    onClick={handleReprocess}
-                                    disabled={isReprocessing || isPublishing}
-                                    className="h-10 px-5 rounded-xl text-xs font-black uppercase gap-2 hover:bg-primary/10 hover:border-primary/40 transition-all"
-                                  >
-                                    {isReprocessing ? (
-                                      <Loader2 className="animate-spin w-3.5 h-3.5" />
-                                    ) : (
-                                      <Zap className="w-3.5 h-3.5" />
-                                    )}{" "}
-                                    Rescan
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    onClick={handleDeletePending}
-                                    disabled={isPublishing}
-                                    className="h-10 px-5 rounded-xl text-xs font-black uppercase gap-2 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all"
-                                  >
-                                    <X className="w-3.5 h-3.5" /> Delete
-                                  </Button>
-                                  <Button
-                                    onClick={handlePublish}
-                                    disabled={isPublishing || !editPos}
-                                    className="h-10 px-7 rounded-xl text-sm font-black uppercase gap-2 shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                                  >
-                                    {isPublishing ? (
-                                      <Loader2 className="animate-spin w-4 h-4" />
-                                    ) : (
-                                      <ShieldCheck className="w-4 h-4 stroke-[3]" />
-                                    )}{" "}
-                                    Authorize
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                          )}
-                          {activeTab === "published" && selectedPublished && (
-                            <div className="flex gap-3">
-                              {canModerate && (
-                                <>
-                                  {canPurge && (
-                                    <Button
-                                      variant="outline"
-                                      onClick={() =>
-                                        setShowDeletePublishedDialog(true)
-                                      }
-                                      disabled={isPublishing}
-                                      className="h-10 px-5 rounded-xl text-xs font-black uppercase gap-2 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />{" "}
-                                      Unpublish
-                                    </Button>
-                                  )}
-                                  <Button
-                                    onClick={handleSavePublished}
-                                    disabled={isSaving}
-                                    className="h-10 px-7 rounded-xl text-sm font-black uppercase gap-2 bg-emerald-600 hover:bg-emerald-500 shadow-xl shadow-emerald-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                                  >
-                                    {isSaving ? (
-                                      <Loader2 className="animate-spin w-4 h-4" />
-                                    ) : (
-                                      <Edit3 className="w-4 h-4" />
-                                    )}{" "}
-                                    Save Changes
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                          )}
-                          {/* ID display */}
-                          <div className="flex flex-col items-start gap-0.5 p-2 px-3.5 rounded-xl border border-border/10 bg-secondary/5">
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
-                              Intel ID
-                            </span>
-                            <span className="text-[11px] font-mono text-muted-foreground/60">
-                              {(activeTab === "pending"
-                                ? selectedPending?.id
-                                : selectedPublished?.id
-                              )?.slice(0, 18)}
-                              ...
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                      <ModerationPanel
+                        activeTab={activeTab}
+                        selectedPending={selectedPending}
+                        selectedPublished={selectedPublished}
+                        canModerate={canModerate}
+                        canPurge={canPurge}
+                        isPublishing={isPublishing}
+                        isSaving={isSaving}
+                        isReprocessing={isReprocessing}
+                        handlePublish={handlePublish}
+                        handleDeletePending={handleDeletePending}
+                        handleSavePublished={handleSavePublished}
+                        handleDeletePublishedConfirm={() =>
+                          setShowDeletePublishedDialog(true)
+                        }
+                        handleReprocess={handleReprocess}
+                        formatRelativeTime={formatRelativeTime}
+                      />
                     </ResizablePanel>
 
                     <ResizableHandle
@@ -1414,135 +708,12 @@ export default function ModerationQueue() {
                       minSize="20"
                       id="queue-map-panel"
                     >
-                      <div className="w-full h-full flex flex-col bg-card/5">
-                        <div className="p-6 border-b border-border/20 bg-background/30 backdrop-blur-md space-y-3">
-                          <h3 className="text-xs font-black uppercase tracking-[0.4em] font-display">
-                            Spatial Correlator
-                          </h3>
-                          <div className="relative group">
-                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/40 group-focus-within:text-primary transition-colors" />
-                            <input
-                              type="text"
-                              placeholder="SEARCH TARGET (E.G. PENTAGON)..."
-                              onKeyDown={async (e) => {
-                                if (e.key !== "Enter") return;
-                                const val = (e.target as HTMLInputElement)
-                                  .value;
-                                const coords = await (
-                                  await fetch(
-                                    `https://photon.komoot.io/api/?q=${encodeURIComponent(
-                                      val
-                                    )}&limit=1`
-                                  )
-                                ).json();
-                                if (coords.features?.[0]) {
-                                  const [lng, lat] =
-                                    coords.features[0].geometry.coordinates;
-                                  setMapClickPos({ lng, lat });
-                                  mapRef.current?.flyTo({
-                                    center: [lng, lat],
-                                    zoom: 15,
-                                  });
-                                }
-                              }}
-                              className="w-full bg-background/60 border border-border/40 rounded-xl pl-10 pr-4 h-10 text-xs font-black uppercase tracking-tight focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-muted-foreground/40"
-                            />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            {mapClickPos ? (
-                              <span className="text-xs font-mono text-emerald-500 font-black flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />{" "}
-                                SYSTEM_LOCK_STABLE
-                              </span>
-                            ) : (
-                              <span className="text-xs font-mono text-destructive font-black flex items-center gap-2 animate-pulse">
-                                <AlertTriangle className="w-3 h-3" />{" "}
-                                NO_COORDINATES
-                              </span>
-                            )}
-                            <span className="text-xs font-mono text-foreground bg-secondary/30 px-2 py-0.5 rounded border border-border/20">
-                              {mapClickPos
-                                ? `${mapClickPos.lat.toFixed(
-                                    5
-                                  )}°N / ${mapClickPos.lng.toFixed(5)}°E`
-                                : "UNKNOWN_LOC"}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex-1 relative">
-                          <Map
-                            ref={mapRef}
-                            initialViewState={{
-                              longitude: mapClickPos?.lng || 0,
-                              latitude: mapClickPos?.lat || 20,
-                              zoom: mapClickPos ? 12 : 1.5,
-                            }}
-                            onClick={(e: MapLayerMouseEvent) =>
-                              setMapClickPos({
-                                lng: e.lngLat.lng,
-                                lat: e.lngLat.lat,
-                              })
-                            }
-                            mapStyle={
-                              theme === "dark"
-                                ? "https://tiles.openfreemap.org/styles/dark"
-                                : "https://tiles.openfreemap.org/styles/bright"
-                            }
-                            style={{ width: "100%", height: "100%" }}
-                          >
-                            {mapClickPos && (
-                              <Marker
-                                longitude={mapClickPos.lng}
-                                latitude={mapClickPos.lat}
-                                anchor="bottom"
-                              >
-                                <div className="relative">
-                                  <div className="absolute inset-x-0 bottom-0 translate-y-1/2 scale-[3.5] blur-xl bg-primary/60 rounded-full animate-pulse" />
-                                  <MapPin className="text-primary fill-background w-12 h-12 -mt-12 stroke-[2.5] drop-shadow-[0_0_10px_rgba(var(--primary),0.5)] relative z-10" />
-                                </div>
-                              </Marker>
-                            )}
-                            <NavigationControl position="bottom-right" />
-                          </Map>
-                          {/* Recalibrate button */}
-                          <div className="absolute top-4 left-4 right-4 z-10 flex flex-col gap-2">
-                            <Card className="bg-background/80 backdrop-blur-2xl border-primary/20 p-2.5 text-center text-[10px] font-black tracking-[0.3em] uppercase border-dashed border-2">
-                              Point of Interest Selection Phase
-                            </Card>
-                            {(() => {
-                              const suggLng =
-                                activeTab === "pending"
-                                  ? selectedPending?.lng
-                                  : selectedPublished?.lng;
-                              const suggLat =
-                                activeTab === "pending"
-                                  ? selectedPending?.lat
-                                  : selectedPublished?.lat;
-                              return suggLng && suggLat ? (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    mapRef.current?.flyTo({
-                                      center: [suggLng, suggLat],
-                                      zoom: 12,
-                                    });
-                                    setMapClickPos({
-                                      lng: suggLng,
-                                      lat: suggLat,
-                                    });
-                                  }}
-                                  className="bg-background border-green-500/60 h-10 text-xs font-black uppercase gap-2 hover:bg-green-500/10 text-green-500 shadow-[0_0_20px_rgba(0,0,0,0.5)] border-2"
-                                >
-                                  <MapPin className="w-3.5 h-3.5" /> RECALIBRATE
-                                  TO SUGGESTION
-                                </Button>
-                              ) : null;
-                            })()}
-                          </div>
-                          <div className="absolute inset-0 pointer-events-none border-[16px] border-primary/5 rounded-3xl" />
-                        </div>
-                      </div>
+                      <QueueMap
+                        activeTab={activeTab}
+                        selectedPending={selectedPending}
+                        selectedPublished={selectedPublished}
+                        mapRef={mapRef}
+                      />
                     </ResizablePanel>
                   </ResizablePanelGroup>
                 ) : (

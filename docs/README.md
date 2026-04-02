@@ -19,6 +19,7 @@ Welcome to the **OSINT Map** technical documentation center. This repository ser
 This project is built on a "Sovereign First" philosophy, prioritizing open-source engines and local control over proprietary SaaS dependencies.
 
 - **Frontend**: Next.js 16 (App Router) + Tailwind CSS 4.0
+- **State & Validation**: Zustand, TanStack Query, and Zod
 - **Map Engine**: MapLibre GL JS (Vector Tile Native)
 - **Persistence**: PostgreSQL + PostGIS (Spatial Indexing)
 - **Logic**: Drizzle ORM + Better-Auth
