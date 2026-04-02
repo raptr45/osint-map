@@ -15,10 +15,8 @@ import {
   Search,
 } from "lucide-react";
 
-import useSWR from "swr";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-
-const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 interface SystemLog {
   id: string;
@@ -40,8 +38,11 @@ interface LogsResponse {
 }
 
 export default function SystemLogsPage() {
-  const { data: response, mutate, isLoading } = useSWR<LogsResponse>("/api/admin/logs", fetcher, {
-    refreshInterval: 5000
+  const qc = useQueryClient();
+  const { data: response, isLoading } = useQuery<LogsResponse>({
+    queryKey: ["admin-logs"],
+    queryFn:  () => fetch("/api/admin/logs").then((r) => r.json()),
+    refetchInterval: 5_000,
   });
 
   const data = response?.logs || [];
@@ -88,7 +89,7 @@ export default function SystemLogsPage() {
           <Button
             variant="default"
             size="sm"
-            onClick={() => mutate()}
+            onClick={() => qc.invalidateQueries({ queryKey: ["admin-logs"] })}
             className="h-10 rounded-xl gap-2 text-xs font-semibold uppercase tracking-wide shadow-xl shadow-primary/20"
           >
             <RefreshCcw className="w-3.5 h-3.5" /> Refresh

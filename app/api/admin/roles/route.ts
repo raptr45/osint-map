@@ -3,6 +3,7 @@ import { user } from "@/lib/auth-schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/admin-check";
+import { UpdateRoleBodySchema } from "@/lib/schemas";
 
 export async function GET() {
   if (!(await isAdmin())) {
@@ -23,9 +24,24 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
+  let body: unknown;
   try {
-    const { userId, action } = await req.json();
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
+  const result = UpdateRoleBodySchema.safeParse(body);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: "Validation failed", details: result.error.format() },
+      { status: 400 }
+    );
+  }
+
+  const { userId, action } = result.data;
+
+  try {
     if (action.startsWith("approve_")) {
       const targetRole = action.split("approve_")[1] as "admin" | "moderator" | "analyst";
       await db.update(user)

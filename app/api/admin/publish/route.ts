@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { pointSql } from "@/lib/map-logic";
 import { getServerSession, hasClearance } from "@/lib/admin-check";
+import { PublishBodySchema } from "@/lib/schemas";
 
 export async function POST(req: Request) {
   const session = await getServerSession();
@@ -12,38 +13,46 @@ export async function POST(req: Request) {
   }
 
   const userId = session.user.id;
-  try {
-    const {
-      id,
-      title,
-      description,
-      lng,
-      lat,
-      severity,
-      sourceUrl,
-      eventType,
-      sourceCreatedAt,
-    } = await req.json();
 
+  // ── Validate request body ──────────────────────────────────────────────────
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const result = PublishBodySchema.safeParse(body);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: "Validation failed", details: result.error.format() },
+      { status: 400 }
+    );
+  }
+
+  const { id, title, description, lng, lat, severity, sourceUrl, eventType, sourceCreatedAt } =
+    result.data;
+
+  try {
     // 1. Get the pending event
     const [pending] = await db
       .select()
       .from(pendingEvents)
       .where(eq(pendingEvents.id, id));
+
     if (!pending) {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
     // 2. Insert into published_events
     await db.insert(publishedEvents).values({
-      title: title || pending.suggestedTitle || "Untitled Event",
-      description: description || pending.suggestedDescription || "",
-      severity: severity || "medium",
-      eventType: eventType || "unknown",
-      imageUrl: pending.imageUrl,
-      sourceUrl: sourceUrl || pending.sourceUrl,
+      title:       title || pending.suggestedTitle || "Untitled Event",
+      description: description ?? pending.suggestedDescription ?? "",
+      severity,
+      eventType:   eventType ?? "unknown",
+      imageUrl:    pending.imageUrl,
+      sourceUrl:   sourceUrl ?? pending.sourceUrl,
       sourceMetadata: pending.sourceMetadata,
-      // Admin-set time takes priority; fall back to original source time
       sourceCreatedAt: sourceCreatedAt
         ? new Date(sourceCreatedAt)
         : pending.sourceCreatedAt,
@@ -57,9 +66,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to publish event:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

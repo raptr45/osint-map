@@ -3,9 +3,10 @@ import { publishedEvents } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { hasClearance } from "@/lib/admin-check";
+import { UpdateEventBodySchema } from "@/lib/schemas";
 
 export async function DELETE(
-  req: Request,
+  _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   if (!(await hasClearance("moderator"))) {
@@ -30,20 +31,35 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
+  // ── Validate request body ────────────────────────────────────────────────
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const result = UpdateEventBodySchema.safeParse(body);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: "Validation failed", details: result.error.format() },
+      { status: 400 }
+    );
+  }
+
   try {
     const { id } = await params;
-    const { title, description, severity, eventType, lng, lat, sourceUrl, imageUrl, sourceCreatedAt } = await req.json();
+    const { title, description, severity, eventType, sourceUrl, imageUrl, sourceCreatedAt, lng, lat } =
+      result.data;
 
-    const updateData: Record<string, unknown> = {
-      title,
-      description,
-      severity,
-      updatedAt: new Date(),
-    };
+    const updateData: Record<string, unknown> = { updatedAt: new Date() };
 
-    if (eventType !== undefined) updateData.eventType = eventType;
-    if (sourceUrl !== undefined) updateData.sourceUrl = sourceUrl;
-    if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+    if (title       !== undefined) updateData.title       = title;
+    if (description !== undefined) updateData.description = description;
+    if (severity    !== undefined) updateData.severity    = severity;
+    if (eventType   !== undefined) updateData.eventType   = eventType;
+    if (sourceUrl   !== undefined) updateData.sourceUrl   = sourceUrl;
+    if (imageUrl    !== undefined) updateData.imageUrl    = imageUrl;
     if (sourceCreatedAt !== undefined) {
       updateData.sourceCreatedAt = sourceCreatedAt ? new Date(sourceCreatedAt) : null;
     }
