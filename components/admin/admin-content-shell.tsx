@@ -5,6 +5,7 @@ import { SIDEBAR_MODE_KEY } from "@/components/admin/admin-sidebar";
 
 export function AdminContentShell({ children }: { children: React.ReactNode }) {
   const [paddingMode, setPaddingMode] = React.useState<"expanded" | "collapsed">("expanded");
+  const [isMobile, setIsMobile] = React.useState(false);
 
   React.useEffect(() => {
     // Init from localStorage
@@ -12,6 +13,10 @@ export function AdminContentShell({ children }: { children: React.ReactNode }) {
     if (stored === "collapsed" || stored === "hover") {
       setPaddingMode("collapsed");
     }
+
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
 
     // Listen for changes
     const onStorage = (e: StorageEvent) => {
@@ -24,13 +29,16 @@ export function AdminContentShell({ children }: { children: React.ReactNode }) {
     
     // Custom event dispatch for intra-window updates
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("resize", checkMobile);
+    };
   }, []);
 
   return (
     <main
       className="flex-1 transition-all duration-300 ease-in-out"
-      style={{ paddingLeft: paddingMode === "collapsed" ? "4rem" : "16rem" }}
+      style={{ paddingLeft: isMobile ? 0 : (paddingMode === "collapsed" ? "4.5rem" : "16rem") }}
     >
       <div className="h-full relative z-10">{children}</div>
     </main>
