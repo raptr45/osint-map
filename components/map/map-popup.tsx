@@ -66,7 +66,7 @@ export function MapPopup({
 
   if (isEditing) {
     return (
-      <div className="p-4 w-[280px] bg-card/95 backdrop-blur-2xl text-card-foreground border border-border/40 shadow-2xl rounded-2xl font-sans space-y-4 animate-in fade-in zoom-in-95 duration-200">
+    <div className="p-4 w-full md:w-[280px] bg-card/95 backdrop-blur-2xl text-card-foreground md:border border-border/40 md:shadow-2xl md:rounded-2xl font-sans space-y-4 animate-in fade-in zoom-in-95 duration-200">
         <div className="space-y-1.5">
           <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest pl-1">Title</label>
           <input
@@ -147,7 +147,7 @@ export function MapPopup({
   }
 
   return (
-    <div className="w-[300px] bg-card/95 backdrop-blur-2xl text-card-foreground shadow-[0_24px_64px_rgba(0,0,0,0.4)] rounded-2xl overflow-hidden font-sans border border-white/5 animate-in fade-in zoom-in-95 duration-200">
+    <div className="w-full md:w-[300px] bg-card/95 md:backdrop-blur-2xl text-card-foreground md:shadow-[0_24px_64px_rgba(0,0,0,0.4)] md:rounded-2xl overflow-hidden font-sans md:border border-white/5 animate-in fade-in zoom-in-95 duration-200 pb-8 md:pb-0">
       {event.imageUrl && !imageError && (
         <div className="relative cursor-zoom-in group overflow-hidden" onClick={() => onLightbox(event.imageUrl!)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}

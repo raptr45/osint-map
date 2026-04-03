@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import type {
   GeoJSONSource,
   MapGeoJSONFeature,
@@ -359,7 +360,25 @@ export function MapView({ role }: MapViewProps) {
     setTheaterGeoJson,
     selectEvent,
     closePopup,
+    setSidebarOpen,
   } = useMapStore();
+
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  // ── Responsive Detection ───────────────────────────────────────────────────
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // ── Auto-manage sidebar on mobile ──────────────────────────────────────────
+  React.useEffect(() => {
+    if (isMobile && selectedEvent) {
+      setSidebarOpen(false);
+    }
+  }, [selectedEvent, isMobile, setSidebarOpen]);
 
   const hours = searchParams.get("hours");
   const region = searchParams.get("region");
@@ -535,7 +554,7 @@ export function MapView({ role }: MapViewProps) {
   const mapStyle = theme === "dark" ? MAP_STYLE_DARK : MAP_STYLE_LIGHT;
 
   return (
-    <div className="relative w-full h-[calc(100vh-100px)] overflow-hidden rounded-3xl border border-border/50 shadow-2xl flex">
+    <div className="relative w-full h-[calc(100vh-56px)] md:h-[calc(100vh-100px)] overflow-hidden sm:rounded-3xl sm:border border-border/50 shadow-2xl flex">
       <style dangerouslySetInnerHTML={{ __html: SCROLLBAR_STYLES }} />
 
       {/* Sidebar */}
@@ -546,10 +565,10 @@ export function MapView({ role }: MapViewProps) {
         mapRef={mapRef}
       />
 
-      {/* Sidebar Toggle */}
+      {/* Sidebar Toggle - Hidden on mobile, fixed positioning on desktop */}
       <button
         onClick={toggleSidebar}
-        className="absolute top-1/2 -translate-y-1/2 z-30 h-16 w-4 bg-background/80 backdrop-blur-xl border border-l-0 border-border/50 rounded-r-xl flex items-center justify-center hover:bg-secondary cursor-pointer transition-all shadow-xl"
+        className="hidden lg:flex absolute top-1/2 -translate-y-1/2 z-30 h-16 w-4 bg-background/80 backdrop-blur-xl border border-l-0 border-border/50 rounded-r-xl items-center justify-center hover:bg-secondary cursor-pointer transition-all shadow-xl"
         style={{ left: isSidebarOpen ? "380px" : "0" }}
       >
         <ChevronRight
@@ -559,6 +578,16 @@ export function MapView({ role }: MapViewProps) {
           )}
         />
       </button>
+
+      {/* Mobile Sidebar Toggle - Visible ONLY on small screens */}
+      {!isSidebarOpen && (
+        <button
+          onClick={toggleSidebar}
+          className="lg:hidden absolute bottom-8 left-6 z-[45] h-14 w-14 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-[0_8px_32px_rgba(var(--primary),0.4)] active:scale-90 transition-all border-2 border-white/20"
+        >
+          <ChevronRight className="w-6 h-6 rotate-180" />
+        </button>
+      )}
 
       {/* Map Area */}
       <div className="flex-1 relative">
@@ -717,8 +746,8 @@ export function MapView({ role }: MapViewProps) {
             </Marker>
           )}
 
-          {/* Popup */}
-          {selectedEvent && (
+          {/* Desktop Popup */}
+          {!isMobile && selectedEvent && (
             <Popup
               longitude={tempPos?.lng ?? selectedEvent.lng}
               latitude={tempPos?.lat ?? selectedEvent.lat}
@@ -766,6 +795,79 @@ export function MapView({ role }: MapViewProps) {
             </Popup>
           )}
         </Map>
+
+        {/* Mobile Detail Sheet */}
+        <AnimatePresence>
+          {isMobile && selectedEvent && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={closePopup}
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80]"
+              />
+              
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 500 }}
+                dragElastic={0.2}
+                onDragEnd={(_, info) => {
+                  if (info.offset.y > 150) closePopup();
+                }}
+                className="fixed bottom-0 left-0 right-0 z-[90] bg-card/95 backdrop-blur-2xl border-t border-border/50 rounded-t-[2.5rem] shadow-[0_-8px_32px_rgba(0,0,0,0.5)] overflow-hidden"
+              >
+                {/* Drag Handle */}
+                <div className="w-full flex justify-center py-4 shrink-0">
+                  <div className="w-12 h-1.5 rounded-full bg-muted-foreground/20" />
+                </div>
+                
+                <div className="px-1 py-1 max-h-[85vh] overflow-y-auto custom-scrollbar">
+                  <MapPopup
+                    event={selectedEvent}
+                    canEdit={canEdit}
+                    canDelete={canDelete}
+                    isEditing={isEditing}
+                    onLightbox={setLightboxUrl}
+                    onToggleEdit={(val: boolean) => {
+                      setIsEditing(val);
+                      setTempPos(null);
+                    }}
+                    onDelete={async (id: string) => {
+                      await fetch(`/api/admin/events/${id}`, { method: "DELETE" });
+                      qc.invalidateQueries({ queryKey: ["map-events"] });
+                      closePopup();
+                    }}
+                    onUpdate={async (id: string, data: Partial<MapEvent>) => {
+                      const finalData = tempPos
+                        ? { ...data, lng: tempPos.lng, lat: tempPos.lat }
+                        : data;
+                      await fetch(`/api/admin/events/${id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(finalData),
+                      });
+                      qc.invalidateQueries({ queryKey: ["map-events"] });
+                      setIsEditing(false);
+                      setTempPos(null);
+                      if (selectedEvent)
+                        setSelectedEvent({
+                          ...selectedEvent,
+                          ...data,
+                          ...(tempPos || {}),
+                        } as MapEvent);
+                    }}
+                  />
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         {/* Lightbox */}
         {lightboxUrl && (

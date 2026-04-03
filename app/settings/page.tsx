@@ -187,21 +187,21 @@ export default function SettingsPage() {
       <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(var(--primary),0.08),transparent_50%)] pointer-events-none" />
       <div className="absolute -bottom-1/4 -right-1/4 w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
 
-      <header className="sticky top-0 w-full h-20 border-b border-white/5 bg-background/50 backdrop-blur-xl z-50 flex items-center px-10 justify-between font-sans">
+      <header className="sticky top-0 w-full h-20 border-b border-border/50 bg-background/50 backdrop-blur-xl z-50 flex items-center px-4 md:px-10 justify-between font-sans">
         <Link href="/" className="group flex items-center gap-2.5">
-           <div className="w-10 h-10 rounded-2xl bg-secondary/40 flex items-center justify-center border border-white/5 transition-all group-hover:scale-110">
+           <div className="w-10 h-10 rounded-2xl bg-secondary/40 flex items-center justify-center border border-border/10 transition-all group-hover:scale-110">
               <ArrowLeft className="w-5 h-5 text-foreground/60 transition-transform group-hover:-translate-x-1" />
            </div>
            <div className="flex flex-col">
-              <h1 className="text-lg font-black tracking-tight uppercase text-foreground leading-none">Settings</h1>
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mt-1.5 flex items-center gap-2">
+              <h1 className="text-sm md:text-lg font-black tracking-tight uppercase text-foreground leading-none">Settings</h1>
+              <span className="text-[9px] md:text-[10px] font-bold text-muted-foreground/80 uppercase tracking-[0.2em] mt-1.5 flex items-center gap-2">
                  Terminal Config
               </span>
            </div>
         </Link>
       </header>
 
-      <main className="max-w-[950px] mx-auto py-12 px-8 space-y-16 pb-32 font-sans">
+      <main className="max-w-[950px] mx-auto py-10 md:py-12 px-4 md:px-8 space-y-12 md:space-y-16 pb-32 font-sans">
         {sections.map((section) => (
           <div key={section.id} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex flex-col space-y-1.5 border-l-2 border-primary/20 pl-6">

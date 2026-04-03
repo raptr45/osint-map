@@ -16,7 +16,7 @@ export default async function Home() {
       {/* Background decoration */}
       <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(120,119,198,0.05),transparent_50%)] pointer-events-none" />
 
-      <header className="sticky top-0 w-full h-16 flex justify-between items-center px-8 z-50 bg-background/50 backdrop-blur-xl border-b border-border/50">
+      <header className="sticky top-0 w-full h-14 md:h-16 flex justify-between items-center px-4 md:px-8 z-[60] bg-background/50 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2.5 group cursor-pointer">
             <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center transition-all group-hover:rotate-6 group-hover:scale-110 shadow-lg shadow-primary/20">
@@ -34,7 +34,7 @@ export default async function Home() {
               </svg>
             </div>
             <div className="flex flex-col h-full justify-center">
-              <span className="font-bold text-lg tracking-tight hidden sm:block uppercase text-foreground font-display leading-none">
+              <span className="font-black text-sm md:text-lg tracking-tight uppercase text-foreground font-display leading-none">
                 OSINT MAP
               </span>
               <span className="text-[10px] font-bold text-foreground/85 uppercase tracking-[0.2em] leading-none mt-1.5 hidden sm:block">
@@ -89,7 +89,7 @@ export default async function Home() {
         </div>
       </header>
 
-      <main className="flex-1 relative p-4">
+      <main className="flex-1 relative p-0 sm:p-4">
         {/* Pass the actual session role for granular permission control on the map */}
         <MapView role={session?.user?.role || "user"} />
       </main>

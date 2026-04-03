@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Globe, Clock, ChevronDown, Check, Calendar, X } from "lucide-react";
+import { Globe, Clock, ChevronDown, Check, Calendar, X, Filter } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -105,7 +105,8 @@ export function HeaderFilters() {
     REGION_OPTIONS.find((o) => o.value === currentRegion)?.label || "Global Region";
 
   return (
-    <div className="hidden lg:flex items-center gap-1.5 bg-secondary/20 p-1 rounded-full border border-border/40">
+    <>
+      <div className="hidden lg:flex items-center gap-1.5 bg-secondary/20 p-1 rounded-full border border-border/40">
       {/* Region Filter */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -252,6 +253,59 @@ export function HeaderFilters() {
           <X className="w-3.5 h-3.5" />
         </button>
       )}
-    </div>
+      </div>
+
+      {/* Mobile Filter Toggle */}
+      <div className="lg:hidden flex items-center gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full w-10 h-10 border-border/50 bg-background/50 backdrop-blur-md"
+            >
+              <Filter className="w-4 h-4 text-primary" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 p-2 backdrop-blur-xl bg-card/95 border-border/50 rounded-2xl shadow-2xl space-y-2">
+            <div className="px-2 py-1.5 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Region Select</div>
+            {REGION_OPTIONS.map((opt) => (
+              <DropdownMenuItem
+                key={opt.value}
+                onClick={() => updateFilter("region", opt.value)}
+                className={cn(
+                  "rounded-xl h-10 px-3 text-xs font-bold uppercase",
+                  currentRegion === opt.value && "bg-primary/10 text-primary"
+                )}
+              >
+                <div className="flex items-center gap-2 w-full">
+                  <Globe className={cn("w-3.5 h-3.5", currentRegion === opt.value ? "text-primary" : "text-muted-foreground/40")} />
+                  {opt.label}
+                </div>
+              </DropdownMenuItem>
+            ))}
+            
+            <DropdownMenuSeparator className="bg-border/10" />
+            
+            <div className="px-2 py-1.5 text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">Time Intel</div>
+            {TIME_OPTIONS.map((opt) => (
+              <DropdownMenuItem
+                key={opt.value}
+                onClick={() => updateFilter("hours", opt.value)}
+                className={cn(
+                  "rounded-xl h-10 px-3 text-xs font-bold uppercase",
+                  currentTime === opt.value && "bg-primary/10 text-primary"
+                )}
+              >
+                <div className="flex items-center gap-2 w-full">
+                  <Clock className={cn("w-3.5 h-3.5", currentTime === opt.value ? "text-primary" : "text-muted-foreground/40")} />
+                  {opt.label}
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </>
   );
 }
