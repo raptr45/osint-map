@@ -128,3 +128,22 @@
     @apply font-sans;
   }
 }
+
+@layer components {
+  /* DRY Tactical Components */
+  .tactical-card {
+    @apply bg-card/30 backdrop-blur-xl border border-border/40 transition-all hover:bg-card/50 relative overflow-hidden;
+  }
+  
+  .tactical-input {
+    @apply w-full bg-background/50 border border-border/40 rounded-xl px-4 h-11 text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-muted-foreground/50;
+  }
+  
+  .tactical-btn {
+    @apply h-10 rounded-xl gap-2 text-xs font-semibold uppercase tracking-wide shadow-lg shadow-primary/10 transition-all;
+  }
+  
+  .tactical-badge {
+    @apply font-black tracking-widest uppercase border;
+  }
+}

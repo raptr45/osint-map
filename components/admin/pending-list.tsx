@@ -152,7 +152,7 @@ export function PendingList({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground/30 group-focus-within:text-primary transition-colors" />
           <input
             type="text"
-            placeholder="SEARCH REGISTRY..."
+            placeholder="Search events..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-secondary/10 border border-border/30 rounded-lg pl-8 pr-28 h-8 text-[10px] font-bold uppercase tracking-tight focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-muted-foreground/50"
@@ -272,10 +272,10 @@ export function PendingList({
                       )}
                     >
                       {item.status === "processing"
-                        ? "PROBING SIGNAL..."
+                        ? "Processing..."
                         : item.status === "failed"
-                        ? "ENRICHMENT FAILED"
-                        : item.suggestedTitle || "ANALYZING..."}
+                        ? "AI Processing Failed"
+                        : item.suggestedTitle || "Analyzing..."}
                     </h3>
                     {item.status === "processing" ? (
                       <Loader2 className="w-3 h-3 text-primary animate-spin shrink-0" />
@@ -329,7 +329,7 @@ export function PendingList({
           <div className="flex flex-col items-center justify-center py-24 opacity-20">
             <Zap className="w-8 h-8 mb-3" />
             <p className="text-[11px] font-black uppercase tracking-widest">
-              Sector Neutral
+              Queue Empty
             </p>
           </div>
         )}

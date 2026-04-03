@@ -454,10 +454,10 @@ export default function ModerationQueue() {
             </div>
             <div className="flex flex-col">
               <h1 className="text-[11px] font-black tracking-[0.2em] uppercase font-display leading-none text-foreground/90">
-                Tactical Response Hub
+                Moderation Queue
               </h1>
               <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1">
-                Admin Console <span className="opacity-30">/</span> v2.4
+                Admin
               </span>
             </div>
           </div>
@@ -508,7 +508,7 @@ export default function ModerationQueue() {
                 onClick={() => setShowManualDialog(true)}
                 className="h-8 rounded-lg px-3 text-[10px] font-black uppercase border-primary/20 text-primary bg-primary/5 hover:bg-primary/10"
               >
-                <Edit3 className="w-3 h-3 mr-2" /> Manual Ingest
+                <Edit3 className="w-3 h-3 mr-2" /> Add Event
               </Button>
             )}
             <Button
@@ -519,7 +519,7 @@ export default function ModerationQueue() {
                 mutatePublished();
               }}
               className="h-8 w-8 p-0 rounded-lg bg-secondary/20 hover:bg-secondary/40 border-border/30"
-              title="Sync Operations"
+              title="Refresh"
             >
               <RefreshCcw className="w-3 h-3" />
             </Button>
@@ -551,7 +551,7 @@ export default function ModerationQueue() {
               id="queue-sidebar-panel"
             >
               <div className="w-full h-full border-r border-border/30 flex flex-col bg-card/5">
-                {/* Tactical Tab Navigator */}
+                {/* Tab Navigator */}
                 <div className="p-3 bg-background/50 border-b border-border/20">
                   <div className="bg-secondary/20 p-1 rounded-xl flex gap-1 border border-border/10">
                     {(
@@ -712,13 +712,13 @@ export default function ModerationQueue() {
                     <h3 className="text-2xl font-black font-display uppercase tracking-tight mb-3 flex items-center gap-3 text-foreground/90">
                       <span className="opacity-20">{"///"}</span>
                       {activeTab === "pending"
-                        ? "Silent Registry"
+                        ? "Select an Item"
                         : "Select an Event"}
                       <span className="opacity-20">{"///"}</span>
                     </h3>
                     <p className="text-sm text-muted-foreground/50 max-w-md leading-relaxed font-medium">
                       {activeTab === "pending"
-                        ? "Select a pending signal from the registry to begin the enrichment and authorization protocol."
+                        ? "Select a pending item from the list on the left to start reviewing and publishing."
                         : "Select a published event from the list to view details, update source links, media, severity or coordinates."}
                     </p>
                   </div>
@@ -737,12 +737,11 @@ export default function ModerationQueue() {
               <AlertCircle className="w-7 h-7 text-destructive animate-bounce" />
             </div>
             <DialogTitle className="text-xl font-black uppercase tracking-tight font-display">
-              System Purge Authorization
+              Clear Queue
             </DialogTitle>
             <DialogDescription className="text-muted-foreground/60 font-medium leading-relaxed">
-              EXTREME CAUTION: This will permanently erase all unverified
-              intelligence from the moderation queue. Data recovery is not
-              possible.
+              This will permanently delete all pending items from the moderation
+              queue. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-col sm:flex-row gap-3 pt-5 border-t border-border/20 mt-5">
@@ -751,7 +750,7 @@ export default function ModerationQueue() {
               onClick={() => setShowClearDialog(false)}
               className="flex-1 h-11 rounded-xl text-xs font-black uppercase"
             >
-              Abort Purge
+              Cancel
             </Button>
             <Button
               variant="destructive"
@@ -762,7 +761,7 @@ export default function ModerationQueue() {
               {isPublishing ? (
                 <Loader2 className="animate-spin" />
               ) : (
-                "Confirm Wipe"
+                "Clear All"
               )}
             </Button>
           </DialogFooter>
@@ -822,10 +821,10 @@ export default function ModerationQueue() {
               </div>
               <div>
                 <DialogTitle className="text-2xl font-black uppercase tracking-tight font-display">
-                  Intelligence Ingestion
+                  Add Event Manually
                 </DialogTitle>
                 <DialogDescription className="text-muted-foreground/60 font-medium text-xs tracking-wide uppercase">
-                  Manual Manual Signal Injection Protocol
+                  Submit raw text for AI processing and review
                 </DialogDescription>
               </div>
             </div>
@@ -834,16 +833,16 @@ export default function ModerationQueue() {
           <div className="space-y-6 pt-4">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest pl-1">
-                Raw Intelligence Content
+                Raw Content
               </label>
               <textarea
-                placeholder="DESCRIBE THE SITUATION IN DETAIL..."
+                placeholder="Describe the event in detail..."
                 className="w-full bg-secondary/20 border border-border/20 rounded-2xl p-5 text-sm h-40 resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all leading-relaxed font-medium placeholder:text-muted-foreground/20"
                 value={manualInput}
                 onChange={(e) => setManualInput(e.target.value)}
               />
               <p className="text-[9px] text-muted-foreground/40 font-bold tracking-widest uppercase pl-1">
-                Minimum 10 characters required for AI enrichment
+                Minimum 10 characters required for AI processing
               </p>
             </div>
 
@@ -853,7 +852,7 @@ export default function ModerationQueue() {
                   Source Name
                 </label>
                 <input
-                  placeholder="E.G. OSINTDEFENDER"
+                  placeholder="e.g. osintdefender"
                   className="w-full bg-secondary/20 border border-border/20 rounded-xl px-4 h-12 text-xs font-black uppercase tracking-tight focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-muted-foreground/20"
                   value={manualSource}
                   onChange={(e) => setManualSource(e.target.value)}
@@ -877,7 +876,7 @@ export default function ModerationQueue() {
                 Image Endpoint (Optional)
               </label>
               <input
-                placeholder="HTTPS://BOLB.VERCEL.APP/..."
+                placeholder="https://..."
                 className="w-full bg-secondary/20 border border-border/20 rounded-xl px-4 h-12 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-muted-foreground/20"
                 value={manualImageUrl}
                 onChange={(e) => setManualImageUrl(e.target.value)}
@@ -891,7 +890,7 @@ export default function ModerationQueue() {
               onClick={() => setShowManualDialog(false)}
               className="flex-1 h-12 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-secondary/40"
             >
-              Abort Protocol
+              Cancel
             </Button>
             <Button
               onClick={handleManualIngest}
@@ -902,7 +901,7 @@ export default function ModerationQueue() {
               {isIngestingManual ? (
                 <Loader2 className="animate-spin" />
               ) : (
-                "Initiate Injection"
+                "Submit"
               )}
             </Button>
           </DialogFooter>

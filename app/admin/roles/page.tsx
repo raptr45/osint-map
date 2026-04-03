@@ -49,8 +49,8 @@ export default function RoleRequestsPage() {
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight font-display mb-1 text-foreground">Personnel Registry</h1>
-        <p className="text-muted-foreground text-sm uppercase tracking-wide font-medium">Review clearance requests and manage tactical access levels.</p>
+        <h1 className="text-3xl font-bold tracking-tight font-display mb-1 text-foreground">User Management</h1>
+        <p className="text-muted-foreground text-sm">Manage user accounts and role assignments.</p>
       </div>
 
       <div className="grid gap-6">
@@ -59,8 +59,8 @@ export default function RoleRequestsPage() {
             <div className="w-16 h-16 rounded-full bg-secondary/50 flex items-center justify-center mx-auto mb-6">
                <Users className="w-8 h-8 text-muted-foreground/30" />
             </div>
-            <h3 className="text-xl font-bold font-display uppercase tracking-tight mb-2">Registry Clear</h3>
-            <p className="text-sm text-muted-foreground max-w-xs mx-auto">No personnel data available.</p>
+            <h3 className="text-xl font-bold font-display tracking-tight mb-2">No users found</h3>
+            <p className="text-sm text-muted-foreground max-w-xs mx-auto">No user accounts to display.</p>
           </Card>
         ) : (
           users.sort((a, b) => {
@@ -98,7 +98,7 @@ export default function RoleRequestsPage() {
                     <div className="flex items-center gap-3">
                         <h4 className="font-bold text-lg tracking-tight font-display uppercase leading-none">{req.name}</h4>
                         {req.roleRequest === "pending" && (
-                            <Badge className="bg-amber-500 text-white border-none text-[11px] font-bold tracking-wide px-2 py-0.5 h-auto rounded-full shadow-lg shadow-amber-500/20">CLEARANCE REQUESTED</Badge>
+                            <Badge className="bg-amber-500 text-white border-none text-[11px] font-bold tracking-wide px-2 py-0.5 h-auto rounded-full shadow-lg shadow-amber-500/20">Role Requested</Badge>
                         )}
                     </div>
                     <p className="text-xs text-muted-foreground font-mono font-medium opacity-80 uppercase tracking-wide">{req.email}</p>
@@ -114,7 +114,7 @@ export default function RoleRequestsPage() {
 
                 {req.role !== "owner" && (
                   <div className="flex flex-col items-end gap-2 w-full lg:w-auto mt-4 lg:mt-0 pt-4 border-t border-border/10 lg:border-none lg:pt-0">
-                    <span className="text-[11px] font-bold uppercase text-muted-foreground/50 tracking-wide">Assign Tactical Clearance</span>
+                    <span className="text-[11px] font-bold uppercase text-muted-foreground/50 tracking-wide">Assign Role</span>
                     <div className="flex items-center gap-2 flex-wrap">
                       <Button 
                         variant="outline" 
@@ -122,7 +122,7 @@ export default function RoleRequestsPage() {
                         onClick={() => handleAction(req.id, "demote")} 
                         className={cn("h-8 text-[11px] font-bold uppercase tracking-wide rounded-lg transition-all", req.role === "user" ? "bg-secondary text-secondary-foreground border-transparent" : "text-muted-foreground border-border/20 hover:bg-secondary/20")}
                       >
-                        Civilian
+                        User
                       </Button>
                       <Button 
                         variant="outline" 

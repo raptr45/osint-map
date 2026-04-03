@@ -1,14 +1,13 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   Database, Plus, Trash2, Globe, Loader2, Signal,
   Radio, ArrowRight, ExternalLink, Twitter, Power,
-  Activity, Clock,
+  Activity, Clock, RefreshCcw, AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, differenceInHours } from "date-fns";
 import { useIngestSources, useToggleSourceMutation, queryKeys } from "@/lib/queries/events";
 import type { IngestSource } from "@/lib/schemas";
 import { useQueryClient } from "@tanstack/react-query";
@@ -43,6 +42,17 @@ export default function SourcesPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const qc = useQueryClient();
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
+
+  const handleSync = async (id: string) => {
+    setSyncingId(id);
+    try {
+      await new Promise(r => setTimeout(r, 1000)); // Mocking sync latency
+      qc.invalidateQueries({ queryKey: queryKeys.ingestSources() });
+    } finally {
+      setSyncingId(null);
+    }
+  };
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,10 +95,10 @@ export default function SourcesPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight font-display mb-1 flex items-center gap-3">
           <Radio className="w-8 h-8 text-primary shadow-[0_0_24px_rgba(var(--primary),0.5)] bg-primary/20 p-1.5 rounded-lg border border-primary/30" />
-          Active Signal Relays
+          Active Sources
         </h1>
-        <p className="text-muted-foreground text-sm uppercase tracking-wide font-medium">
-          Manage MTProto extraction nodes &amp; OSINT pipelines
+        <p className="text-muted-foreground text-sm">
+          Manage ingest sources and data pipelines.
         </p>
       </div>
 
@@ -98,30 +108,32 @@ export default function SourcesPage() {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center p-32 opacity-50 gap-6">
               <Loader2 className="w-10 h-10 animate-spin text-primary" />
-              <span className="text-xs uppercase tracking-wide font-bold text-primary animate-pulse">Synchronizing Topology...</span>
+              <span className="text-xs uppercase tracking-wide font-bold text-primary animate-pulse">Loading sources...</span>
             </div>
           ) : !sources?.length ? (
-            <Card className="p-20 text-center bg-card/20 backdrop-blur-xl border-dashed border-2 border-border/40 rounded-3xl">
+            <div className="p-20 text-center tactical-card border-dashed border-2 rounded-3xl">
               <div className="w-16 h-16 rounded-full bg-secondary/50 flex items-center justify-center mx-auto mb-6">
                 <Database className="w-8 h-8 text-muted-foreground/30" />
               </div>
-              <h3 className="text-xl font-bold font-display uppercase tracking-tight mb-2">No Comm Relays Online</h3>
-              <p className="text-sm text-muted-foreground max-w-xs mx-auto">Deploy a new extraction node to begin collecting signals.</p>
-            </Card>
+              <h3 className="text-xl font-bold font-display tracking-tight mb-2">No sources added</h3>
+              <p className="text-sm text-muted-foreground max-w-xs mx-auto">Add a new ingest source to start collecting data.</p>
+            </div>
           ) : (
             <div className="grid gap-4">
               {(sources ?? []).map((source: IngestSource) => {
                 const styles = SOURCE_STYLES[source.type] ?? SOURCE_STYLES.custom;
                 const Icon = SOURCE_ICONS[source.type] ?? Globe;
                 const link = SOURCE_LINK[source.type]?.(source.value);
+                const isStalled = source.isActive && source.lastFetchedAt && differenceInHours(new Date(), new Date(source.lastFetchedAt)) > 6;
 
                 return (
-                  <Card
+                  <div
                     key={source.id}
                     className={cn(
-                      "p-5 flex items-center justify-between bg-card/30 backdrop-blur-xl border-border/40 hover:bg-card/50 transition-all overflow-hidden relative",
-                      source.isActive && "border-primary/20 shadow-lg shadow-primary/5",
-                      !source.isActive && "opacity-60"
+                      "tactical-card p-5 flex items-center justify-between",
+                      source.isActive && !isStalled && "border-primary/20 shadow-lg shadow-primary/5",
+                      source.isActive && isStalled && "border-amber-500/30 shadow-lg shadow-amber-500/5",
+                      !source.isActive && "opacity-60 grayscale-[0.5]"
                     )}
                   >
                     {source.isActive && (
@@ -161,12 +173,15 @@ export default function SourcesPage() {
                           </span>
                           <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-bold uppercase tracking-wide">
                             <Activity className="w-3 h-3" />
-                            {source.signalsLast24h} signals (24h)
+                            {source.signalsLast24h} posts (24h)
                           </span>
                           {source.lastFetchedAt && (
-                            <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-bold uppercase tracking-wide">
-                              <Clock className="w-3 h-3" />
-                              {formatDistanceToNow(new Date(source.lastFetchedAt), { addSuffix: true })}
+                            <span className={cn(
+                              "flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide",
+                              isStalled ? "text-amber-500 animate-pulse" : "text-emerald-500/80"
+                            )}>
+                              {isStalled ? <AlertTriangle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                              {isStalled ? "Stalled: " : "Last synced "}{formatDistanceToNow(new Date(source.lastFetchedAt), { addSuffix: true })}
                             </span>
                           )}
                         </div>
@@ -180,15 +195,29 @@ export default function SourcesPage() {
                         {source.isActive ? (
                           <>
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
-                            <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-500">Live</span>
+                            <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-500">Active</span>
                           </>
                         ) : (
                           <>
                             <div className="w-1.5 h-1.5 rounded-full bg-amber-500/60" />
-                            <span className="text-[10px] font-bold uppercase tracking-wide text-amber-500/80">Maint.</span>
+                            <span className="text-[10px] font-bold uppercase tracking-wide text-amber-500/80">Inactive</span>
                           </>
                         )}
                       </div>
+
+                      {/* Force Sync */}
+                      {source.isActive && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSync(source.id)}
+                          disabled={syncingId === source.id}
+                          title="Refresh source"
+                          className="h-9 w-9 p-0 text-muted-foreground/50 hover:text-primary hover:bg-primary/10 rounded-xl hover:border hover:border-primary/20 transition-all border border-transparent"
+                        >
+                          {syncingId === source.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
+                        </Button>
+                      )}
 
                       {/* Toggle */}
                       <Button
@@ -196,7 +225,7 @@ export default function SourcesPage() {
                         size="sm"
                         onClick={() => handleToggle(source.id, source.isActive)}
                         disabled={togglingId === source.id}
-                        title={source.isActive ? "Put in maintenance" : "Bring online"}
+                        title={source.isActive ? "Disable" : "Enable"}
                         className={cn(
                           "h-9 w-9 p-0 rounded-xl border transition-all",
                           source.isActive
@@ -218,7 +247,7 @@ export default function SourcesPage() {
                         {deletingId === source.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                       </Button>
                     </div>
-                  </Card>
+                  </div>
                 );
               })}
             </div>
@@ -227,35 +256,35 @@ export default function SourcesPage() {
 
         {/* Add Form */}
         <div>
-          <Card className="bg-card/40 backdrop-blur-xl border-border/40 sticky top-8 overflow-hidden rounded-[2rem] shadow-2xl">
+          <div className="tactical-card sticky top-8 rounded-[2rem] shadow-2xl">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none" />
             <div className="p-8 relative space-y-6">
-              <h3 className="font-bold font-display uppercase tracking-wide flex items-center gap-3 text-sm text-primary">
-                <Plus className="w-5 h-5 bg-primary/20 p-1 rounded border border-primary/30 shadow-[0_0_12px_rgba(var(--primary),0.4)]" />
-                Deploy Extraction Node
+              <h3 className="font-bold font-display tracking-wide flex items-center gap-3 text-sm text-primary">
+                <Plus className="w-5 h-5 bg-primary/20 p-1 rounded border border-primary/30" />
+                Add Source
               </h3>
 
               <form onSubmit={handleAdd} className="space-y-5">
                 {/* Source Type */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest flex items-center gap-2">
-                    <ArrowRight className="w-3 h-3 text-primary/60" /> Operation Protocol
+                    <ArrowRight className="w-3 h-3 text-primary/60" /> Source Type
                   </label>
                   <select
                     value={newType}
                     onChange={(e) => setNewType(e.target.value as IngestSource["type"])}
-                    className="w-full bg-background/60 border border-border/40 shadow-inner p-4 rounded-xl text-xs font-bold uppercase tracking-wide outline-none focus:ring-1 focus:ring-primary/50 transition-all font-sans text-foreground"
+                    className="tactical-input h-14 text-foreground/90 font-bold uppercase tracking-wide appearance-none"
                   >
-                    <option value="telegram">MTProto Network (Telegram)</option>
-                    <option value="x">X Intelligence Feed (Twitter / X)</option>
-                    <option value="rss" disabled>RSS Syndication (Dormant)</option>
+                    <option value="telegram">Telegram</option>
+                    <option value="x">X / Twitter</option>
+                    <option value="rss" disabled>RSS (unavailable)</option>
                   </select>
                 </div>
 
                 {/* Handle / Username */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest flex items-center gap-2">
-                    <ArrowRight className="w-3 h-3 text-primary/60" /> Target Handle
+                    <ArrowRight className="w-3 h-3 text-primary/60" /> Handle / Username
                   </label>
                   <input
                     type="text"
@@ -263,11 +292,11 @@ export default function SourcesPage() {
                     onChange={(e) => setNewValue(e.target.value)}
                     placeholder={newType === "x" ? "E.G. osintdefender" : "E.G. LIVEUAMAP"}
                     required
-                    className="w-full bg-background/60 border border-border/40 shadow-inner p-4 rounded-xl text-xs font-bold placeholder:text-muted-foreground/40 uppercase tracking-wide outline-none focus:ring-1 focus:ring-primary/50 transition-all font-mono text-foreground"
+                    className="tactical-input h-14 font-mono uppercase tracking-widest text-foreground/90"
                   />
                   <p className="text-[10px] text-muted-foreground/50 font-medium pl-1">
-                    {newType === "telegram" && "Telegram username (without @)"}
-                    {newType === "x" && "X/Twitter handle (without @) — ingestor integration required"}
+                    {newType === "telegram" && "Telegram channel username (without @)"}
+                    {newType === "x" && "X/Twitter handle (without @)"}
                     {newType === "rss" && "Full RSS feed URL"}
                   </p>
                 </div>
@@ -275,14 +304,14 @@ export default function SourcesPage() {
                 <Button
                   type="submit"
                   disabled={isAdding || !newValue}
-                  className="w-full h-14 uppercase tracking-wide font-bold text-xs gap-3 shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all rounded-xl border border-primary/20"
+                  className="tactical-btn w-full h-14 gap-3 text-xs border border-primary/20 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   {isAdding ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5 stroke-[3]" />}
-                  Initialize Pipeline
+                  Add Source
                 </Button>
               </form>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
     </div>
