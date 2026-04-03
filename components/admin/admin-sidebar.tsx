@@ -10,6 +10,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { 
+  motion, 
+  AnimatePresence, 
+} from "framer-motion";
 import {
   BarChart3,
   Database,
@@ -21,6 +25,8 @@ import {
   ShieldCheck,
   User,
   Users,
+  Menu,
+  X,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -85,6 +91,8 @@ export function AdminSidebar() {
   const [mode, setMode] = React.useState<SidebarMode>("expanded");
   const [mounted, setMounted] = React.useState(false);
   const [isHovering, setIsHovering] = React.useState(false);
+  const [isMobile, setIsMobile] = React.useState(false);
+  const [isMobileOpen, setIsMobileOpen] = React.useState(false);
 
   React.useEffect(() => {
     const stored = localStorage.getItem(SIDEBAR_MODE_KEY) as SidebarMode | null;
@@ -92,6 +100,11 @@ export function AdminSidebar() {
       setMode(stored);
     }
     setMounted(true);
+
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   const changeMode = (newMode: SidebarMode) => {
@@ -107,29 +120,29 @@ export function AdminSidebar() {
 
   if (!mounted)
     return (
-      <aside className="fixed left-0 top-0 h-screen w-64 bg-background border-r border-border/50 z-50" />
+      <aside className="fixed left-0 top-0 h-screen w-64 bg-background border-r border-border/50 z-50 lg:block hidden" />
     );
 
   const isVisuallyExpanded =
-    mode === "expanded" || (mode === "hover" && isHovering);
+    (mode === "expanded" || (mode === "hover" && isHovering)) || isMobile;
 
-  return (
-    <aside
-      onMouseEnter={() => mode === "hover" && setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
+  const sidebarContent = (
+    <div
+      onMouseEnter={() => mode === "hover" && !isMobile && setIsHovering(true)}
+      onMouseLeave={() => !isMobile && setIsHovering(false)}
       className={cn(
-        "fixed left-0 top-0 h-screen bg-background border-r border-border/50 flex flex-col z-50 transition-all duration-300 ease-in-out shadow-lg",
-        isVisuallyExpanded ? "w-64" : "w-16"
+        "bg-background border-r border-border/50 flex flex-col transition-all duration-300 ease-in-out shadow-lg h-full",
+        (isMobile || isVisuallyExpanded) ? "w-64" : "w-16"
       )}
     >
       {/* Header */}
       <div
         className={cn(
           "flex items-center px-4 h-16 border-b border-border/20 shrink-0",
-          isVisuallyExpanded ? "justify-between" : "justify-center"
+          (isMobile || isVisuallyExpanded) ? "justify-between" : "justify-center"
         )}
       >
-        {isVisuallyExpanded && (
+        {(isMobile || isVisuallyExpanded) && (
           <Link
             href="/"
             className="flex items-center gap-2 group overflow-hidden"
@@ -143,7 +156,13 @@ export function AdminSidebar() {
           </Link>
         )}
 
-        {!isVisuallyExpanded && (
+        {isMobile && (
+          <button onClick={() => setIsMobileOpen(false)} className="p-2 -mr-2 text-muted-foreground hover:text-foreground">
+            <X className="w-5 h-5" />
+          </button>
+        )}
+
+        {!isMobile && !isVisuallyExpanded && (
           <Link href="/" className="group">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20 shrink-0 transition-transform group-hover:scale-110">
               <ShieldCheck className="w-5 h-5 text-primary-foreground" />
@@ -155,11 +174,11 @@ export function AdminSidebar() {
       {/* Nav Items */}
       <nav
         className={cn(
-          "flex-1 py-6 space-y-1.5",
-          isVisuallyExpanded ? "px-4" : "px-2"
+          "flex-1 py-6 space-y-1.5 overflow-y-auto custom-scrollbar",
+          (isMobile || isVisuallyExpanded) ? "px-4" : "px-2"
         )}
       >
-        {isVisuallyExpanded && (
+        {(isMobile || isVisuallyExpanded) && (
           <div className="text-[10px] font-black text-muted-foreground/70 uppercase tracking-[0.2em] px-4 mb-4 whitespace-nowrap">
             Administration
           </div>
@@ -173,10 +192,11 @@ export function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
-              title={!isVisuallyExpanded ? item.title : undefined}
+              title={(!isMobile && !isVisuallyExpanded) ? item.title : undefined}
+              onClick={() => isMobile && setIsMobileOpen(false)}
               className={cn(
                 "flex items-center rounded-xl transition-all group font-sans text-sm font-medium relative overflow-hidden",
-                isVisuallyExpanded
+                (isMobile || isVisuallyExpanded)
                   ? "justify-between px-4 py-3"
                   : "justify-center p-3",
                 isActive
@@ -187,7 +207,7 @@ export function AdminSidebar() {
               <div
                 className={cn(
                   "flex items-center",
-                  isVisuallyExpanded ? "gap-3" : ""
+                  (isMobile || isVisuallyExpanded) ? "gap-3" : ""
                 )}
               >
                 <item.icon
@@ -198,18 +218,18 @@ export function AdminSidebar() {
                       : "text-muted-foreground group-hover:text-foreground"
                   )}
                 />
-                {isVisuallyExpanded && (
+                {(isMobile || isVisuallyExpanded) && (
                   <span className="opacity-100 transition-opacity duration-300 whitespace-nowrap">
                     {item.title}
                   </span>
                 )}
               </div>
-              {isVisuallyExpanded && item.badge && (
+              {(isMobile || isVisuallyExpanded) && item.badge && (
                 <span className="text-[9px] font-black bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full shadow-lg shadow-primary/20 whitespace-nowrap">
                   {item.badge}
                 </span>
               )}
-              {!isVisuallyExpanded && item.badge && (
+              {!isMobile && !isVisuallyExpanded && item.badge && (
                 <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-primary" />
               )}
             </Link>
@@ -218,11 +238,11 @@ export function AdminSidebar() {
       </nav>
 
       {/* Footer / User Card */}
-      <div className={cn("mt-auto", isVisuallyExpanded ? "p-4" : "p-2")}>
+      <div className={cn("mt-auto", (isMobile || isVisuallyExpanded) ? "p-4" : "p-2")}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="w-full text-left outline-none mb-4 group/user">
-              {isVisuallyExpanded ? (
+              {(isMobile || isVisuallyExpanded) ? (
                 <div className="bg-secondary/20 rounded-2xl p-4 border border-border/10 hover:bg-secondary/30 transition-all flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/20 overflow-hidden shrink-0 transition-transform group-hover/user:scale-105">
                     {session?.user.image ? (
@@ -271,14 +291,14 @@ export function AdminSidebar() {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            side="right"
+            side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={16}
             className="w-56"
           >
-            <DropdownMenuLabel className="font-sans">
+            <DropdownMenuLabel className="font-display">
               <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-black">{session?.user.name}</span>
+                <span className="text-sm font-black tracking-tight">{session?.user.name}</span>
                 <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">
                   System Administrator
                 </span>
@@ -311,63 +331,112 @@ export function AdminSidebar() {
         <div
           className={cn(
             "flex items-center border-t border-border/10 pt-4 mt-2",
-            isVisuallyExpanded ? "justify-between px-4" : "justify-center"
+            (isMobile || isVisuallyExpanded) ? "justify-between px-4" : "justify-center"
           )}
         >
-          {isVisuallyExpanded && (
+          {(isMobile || isVisuallyExpanded) && (
             <span className="text-[9px] font-black text-muted-foreground/30 uppercase tracking-[0.2em]">
               v0.1-α
             </span>
           )}
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-all outline-none flex items-center justify-center"
-                title="Sidebar settings"
+          {!isMobile && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-all outline-none flex items-center justify-center"
+                  title="Sidebar settings"
+                >
+                  <PanelLeft className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align={isVisuallyExpanded ? "end" : "center"}
+                side="right"
+                sideOffset={16}
+                className="w-48"
               >
-                <PanelLeft className="w-4 h-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align={isVisuallyExpanded ? "end" : "center"}
-              side="right"
-              sideOffset={16}
-              className="w-48"
-            >
-              <DropdownMenuLabel>Sidebar control</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => changeMode("expanded")}
-                className="flex items-center justify-between"
-              >
-                Expanded
-                {mode === "expanded" && (
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => changeMode("collapsed")}
-                className="flex items-center justify-between"
-              >
-                Collapsed
-                {mode === "collapsed" && (
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => changeMode("hover")}
-                className="flex items-center justify-between"
-              >
-                Expand on hover
-                {mode === "hover" && (
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                )}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuLabel>Sidebar control</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => changeMode("expanded")}
+                  className="flex items-center justify-between"
+                >
+                  Expanded
+                  {mode === "expanded" && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => changeMode("collapsed")}
+                  className="flex items-center justify-between"
+                >
+                  Collapsed
+                  {mode === "collapsed" && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => changeMode("hover")}
+                  className="flex items-center justify-between"
+                >
+                  Expand on hover
+                  {mode === "hover" && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  )}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      <div className="lg:hidden fixed top-4 right-4 z-[60] flex items-center gap-3">
+        <button
+          onClick={() => setIsMobileOpen(true)}
+          className="w-10 h-10 rounded-xl bg-background/50 backdrop-blur-xl border border-border/50 flex items-center justify-center shadow-lg text-foreground hover:bg-background/80 transition-all"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+      </div>
+
+      {isMobile ? (
+        <AnimatePresence>
+          {isMobileOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsMobileOpen(false)}
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[70]"
+              />
+              <motion.div
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="fixed inset-y-0 left-0 z-[80] overflow-hidden rounded-r-3xl"
+              >
+                {sidebarContent}
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      ) : (
+        <aside
+          className={cn(
+            "fixed left-0 top-0 h-screen transition-all duration-300 ease-in-out z-50",
+            isVisuallyExpanded ? "w-64" : "w-16"
+          )}
+        >
+          {sidebarContent}
+        </aside>
+      )}
+    </>
   );
 }

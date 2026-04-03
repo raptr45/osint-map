@@ -457,68 +457,92 @@ export default function ModerationQueue() {
     }
   };
 
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   const isSelected =
     activeTab === "pending" ? !!selectedPending : !!selectedPublished;
+
+  const handleBackToList = () => {
+    if (activeTab === "pending") setSelectedPendingId(null);
+    else setSelectedPublishedId(null);
+  };
 
   return (
     <div className="h-screen flex flex-col bg-background font-sans overflow-hidden">
       {/* Header */}
-      <header className="h-20 border-b border-white/5 bg-background/40 backdrop-blur-[40px] flex items-center justify-between px-10 z-30 shrink-0 relative">
+      <header className="h-auto sm:h-20 border-b border-white/5 bg-background/40 backdrop-blur-[40px] flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 sm:px-10 py-4 sm:py-0 z-30 shrink-0 relative gap-4">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
-        <div className="flex items-center gap-6 relative z-10">
-          <div className="flex items-center gap-5">
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-2xl shadow-primary/10">
-              <ShieldCheck className="w-6 h-6 text-primary" />
+        <div className="flex items-center gap-4 sm:gap-6 relative z-10 w-full sm:w-auto">
+          {isMobile && isSelected && (
+            <button 
+              onClick={handleBackToList}
+              className="p-2 -ml-2 text-muted-foreground hover:text-foreground"
+            >
+              <RefreshCcw className="w-5 h-5 rotate-180" />
+            </button>
+          )}
+          <div className="flex items-center gap-3 sm:gap-5">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-2xl shadow-primary/10 shrink-0">
+              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
             </div>
             <div className="flex flex-col">
-              <h1 className="text-2xl font-black tracking-tight font-display text-white uppercase leading-none">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight font-display text-white uppercase leading-none italic">
                 Moderation
               </h1>
-              <p className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.3em] mt-1.5 flex items-center gap-2">
+              <p className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em] sm:tracking-[0.3em] mt-1 sm:mt-1.5 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
-                Admin Queue
+                <span className="hidden sm:inline">Admin Queue</span>
+                <span className="sm:hidden">Queue</span>
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-6 relative z-10">
+        <div className="flex items-center gap-3 sm:gap-6 relative z-10 w-full sm:w-auto justify-between sm:justify-end">
           {/* AI Provider */}
-          <div className="flex items-center gap-1.5 bg-white/5 p-1.5 rounded-2xl border border-white/5 shadow-2xl">
+          <div className="flex items-center gap-1 sm:gap-1.5 bg-white/5 p-1 rounded-xl sm:rounded-2xl border border-white/5 shadow-2xl">
             {(["gemini", "openai"] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => handleProviderSwitch(p)}
                 disabled={isSwitchingProvider}
                 className={cn(
-                  "flex items-center gap-2 px-5 h-9 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                  "flex items-center gap-2 px-3 sm:px-5 h-8 sm:h-9 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all duration-300",
                   settings?.provider === p
                     ? "bg-primary text-primary-foreground shadow-xl shadow-primary/30"
                     : "text-muted-foreground/60 hover:text-white hover:bg-white/5"
                 )}
               >
                 {isSwitchingProvider && settings?.provider !== p ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin" />
                 ) : (
-                  <Brain className="w-3.5 h-3.5" />
+                  <Brain className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 )}
-                <span className="hidden lg:inline">
-                  {p === "gemini" ? "Google Gemini" : "OpenAI GPT-4o"}
+                <span className="hidden md:inline">
+                  {p === "gemini" ? "Gemini" : "GPT-4o"}
                 </span>
-                <span className="lg:hidden uppercase">{p[0]}</span>
+                <span className="md:hidden uppercase">{p[0]}</span>
               </button>
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
-            {canPurge && (
+          <div className="flex items-center gap-2 sm:gap-3">
+            {canPurge && !isMobile && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowClearDialog(true)}
-                className="h-11 px-5 rounded-xl text-[10px] font-black uppercase border-rose-500/10 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/30 transition-all duration-300"
+                className="h-9 sm:h-11 px-3 sm:px-5 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase border-rose-500/10 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/30 transition-all duration-300"
               >
-                <Trash2 className="w-4 h-4 mr-2" /> Clear All
+                <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" /> 
+                <span className="hidden lg:inline">Clear All</span>
               </Button>
             )}
             {canAddCustomEvent && (
@@ -526,9 +550,10 @@ export default function ModerationQueue() {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowManualDialog(true)}
-                className="tactical-btn-outline h-11 px-6"
+                className="tactical-btn-outline h-9 sm:h-11 px-3 sm:px-6 rounded-lg sm:rounded-xl"
               >
-                <Edit3 className="w-4 h-4 mr-2" /> New Event
+                <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
+                <span className="hidden sm:inline text-[9px] sm:text-[10px] uppercase font-black">New Event</span>
               </Button>
             )}
             <Button
@@ -538,10 +563,10 @@ export default function ModerationQueue() {
                 mutate();
                 mutatePublished();
               }}
-              className="h-11 w-11 p-0 rounded-xl bg-white/5 hover:bg-white/10 border-white/5 transition-all duration-300 group/refresh"
+              className="h-9 w-9 sm:h-11 sm:w-11 p-0 rounded-lg sm:rounded-xl bg-white/5 hover:bg-white/10 border-white/5 transition-all duration-300 group/refresh"
               title="Refresh Data"
             >
-              <RefreshCcw className="w-4 h-4 text-muted-foreground group-active/refresh:rotate-180 transition-transform duration-500" />
+              <RefreshCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground group-active/refresh:rotate-180 transition-transform duration-500" />
             </Button>
           </div>
         </div>
@@ -552,6 +577,113 @@ export default function ModerationQueue() {
         {!isLayoutLoaded ? (
           <div className="flex-1 flex items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-primary/20" />
+          </div>
+        ) : isMobile ? (
+          <div className="flex-1 flex flex-col overflow-hidden relative">
+            {/* Mobile View Switcher */}
+            <div className={cn(
+               "absolute inset-0 transition-transform duration-500 ease-in-out z-10 flex flex-col",
+               isSelected ? "-translate-x-full" : "translate-x-0"
+            )}>
+                <div className="p-4 bg-primary/5 border-b border-white/5">
+                   <div className="bg-white/5 p-1 rounded-xl flex gap-1 border border-white/5 shadow-2xl relative z-10">
+                    {(
+                      [
+                        {
+                          key: "pending",
+                          label: "Queue",
+                          count: queue?.length,
+                          icon: AlertTriangle,
+                        },
+                        {
+                          key: "published",
+                          label: "Published",
+                          count: published?.length,
+                          icon: CheckCircle2,
+                        },
+                      ] as const
+                    ).map(({ key, label, count, icon: Icon }) => (
+                      <button
+                        key={key}
+                        onClick={() => setActiveTab(key)}
+                        className={cn(
+                          "flex-1 flex items-center justify-center gap-2 h-10 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-500 relative overflow-hidden",
+                          activeTab === key
+                            ? "bg-primary text-primary-foreground shadow-xl shadow-primary/30"
+                            : "text-foreground/60 hover:bg-white/5"
+                        )}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span>{label}</span>
+                        {count !== undefined && (
+                          <span className="px-1.5 py-0.5 rounded-md bg-white/10 text-[8px] font-black">{count}</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex-1 overflow-hidden">
+                   {activeTab === "pending" ? (
+                      <PendingList
+                        queue={queue}
+                        isLoading={isLoading}
+                        selectedPendingId={selectedPendingId}
+                        onSelect={(id) => setSelectedPendingId(id)}
+                        sortBy={sortBy}
+                        onSortChange={setSortBy}
+                        sortOrder={sortOrder}
+                        onSortOrderChange={setSortOrder}
+                        formatRelativeTime={formatRelativeTime}
+                      />
+                   ) : (
+                      <PublishedList
+                        published={published}
+                        isLoading={isLoadingPublished}
+                        selectedPublishedId={selectedPublishedId}
+                        onSelect={(id) => setSelectedPublishedId(id)}
+                        formatRelativeTime={formatRelativeTime}
+                        sortBy={sortByPublished}
+                        onSortChange={setSortByPublished}
+                        sortOrder={sortOrderPublished}
+                        onSortOrderChange={setSortOrderPublished}
+                      />
+                   )}
+                </div>
+            </div>
+
+            <div className={cn(
+               "absolute inset-0 transition-transform duration-500 ease-in-out z-20 bg-background flex flex-col",
+               isSelected ? "translate-x-0" : "translate-x-full"
+            )}>
+               <div className="flex-1 overflow-y-auto">
+                   <ModerationPanel
+                    activeTab={activeTab}
+                    selectedPending={selectedPending}
+                    selectedPublished={selectedPublished}
+                    canModerate={canModerate}
+                    canPurge={canPurge}
+                    isPublishing={isPublishing}
+                    isSaving={isSaving}
+                    isReprocessing={isReprocessing}
+                    handlePublish={handlePublish}
+                    handleDeletePending={handleDeletePending}
+                    handleSavePublished={handleSavePublished}
+                    handleDeletePublishedConfirm={() =>
+                      setShowDeletePublishedDialog(true)
+                    }
+                    handleReprocess={handleReprocess}
+                    formatRelativeTime={formatRelativeTime}
+                  />
+                  <div className="h-[250px] w-full shrink-0 border-t border-white/5">
+                      <QueueMap
+                        activeTab={activeTab}
+                        selectedPending={selectedPending}
+                        selectedPublished={selectedPublished}
+                        mapRef={mapRef}
+                      />
+                  </div>
+               </div>
+            </div>
           </div>
         ) : (
           <ResizablePanelGroup
@@ -591,7 +723,7 @@ export default function ModerationQueue() {
                           color: "emerald-500",
                         },
                       ] as const
-                    ).map(({ key, label, count, icon: Icon, color }) => (
+                    ).map(({ key, label, count, icon: Icon }) => (
                       <button
                         key={key}
                         onClick={() => setActiveTab(key)}
@@ -625,8 +757,6 @@ export default function ModerationQueue() {
                     ))}
                   </div>
                 </div>
-
-                {/* Sub-header area for Search/Sort inside the list components */}
 
                 <div className="flex-1 overflow-hidden p-0">
                   {/* PENDING LIST */}
@@ -736,7 +866,7 @@ export default function ModerationQueue() {
                         <Activity className="w-10 h-10 text-primary/40 animate-pulse" />
                       </div>
                     </div>
-                    <h3 className="text-2xl font-black font-display uppercase tracking-tight mb-3 flex items-center gap-3 text-foreground/90">
+                    <h3 className="text-2xl font-black font-display uppercase tracking-tight mb-3 flex items-center gap-3 text-foreground/90 italic">
                       <span className="opacity-20">{"///"}</span>
                       {activeTab === "pending"
                         ? "Select an Item"
