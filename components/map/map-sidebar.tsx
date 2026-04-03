@@ -20,6 +20,10 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import { 
+  motion, 
+  AnimatePresence, 
+} from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
 import type { MapRef } from "react-map-gl/maplibre";
@@ -44,6 +48,7 @@ export function MapSidebar({
 }: MapSidebarProps) {
   const {
     isSidebarOpen,
+    setSidebarOpen,
     selectedEvent,
     setSelectedEvent,
     clusterFilter,
@@ -52,6 +57,15 @@ export function MapSidebar({
     setEventTypeFilter,
   } = useMapStore();
   const [isOverviewOpen, setIsOverviewOpen] = React.useState(true);
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  // ── Responsive Detection ───────────────────────────────────────────────────
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const searchParams = useSearchParams();
   const theater = searchParams.get("theater");
@@ -118,13 +132,34 @@ export function MapSidebar({
   };
 
   return (
-    <div
-      className={cn(
-        "h-full bg-background/80 backdrop-blur-xl border-r border-border/50 flex flex-col transition-all duration-300 ease-in-out z-20",
-        isSidebarOpen ? "w-[380px]" : "w-0 p-0 overflow-hidden border-none"
-      )}
-    >
-      <div className="p-6 flex flex-col h-full">
+    <AnimatePresence>
+      {isSidebarOpen && (
+        <motion.div
+          initial={isMobile ? { y: "100%" } : { x: "-100%" }}
+          animate={isMobile ? { y: 0 } : { x: 0 }}
+          exit={isMobile ? { y: "100%" } : { x: "-100%" }}
+          transition={{ type: "spring", damping: 25, stiffness: 200 }}
+          drag={isMobile ? "y" : false}
+          dragConstraints={{ top: 0, bottom: 500 }}
+          dragElastic={0.2}
+          onDragEnd={(_, info) => {
+            if (isMobile && info.offset.y > 150) setSidebarOpen(false);
+          }}
+          className={cn(
+            "bg-background/80 backdrop-blur-xl border-border/50 flex flex-col z-[70] shadow-2xl",
+            isMobile 
+              ? "fixed bottom-0 left-0 right-0 h-[75vh] rounded-t-[2.5rem] border-t" 
+              : "h-full lg:relative border-r w-[380px]"
+          )}
+        >
+          {/* Mobile Drag Handle */}
+          {isMobile && (
+            <div className="w-full flex justify-center py-4 shrink-0">
+              <div className="w-12 h-1.5 rounded-full bg-muted-foreground/20" />
+            </div>
+          )}
+          
+          <div className={cn("flex flex-col h-full overflow-hidden", isMobile ? "px-6 pb-6" : "p-6")}>
         {/* Header */}
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/10">
           <div className="flex items-center gap-2.5">
@@ -336,7 +371,9 @@ export function MapSidebar({
             </div>
           )}
         </div>
-      </div>
-    </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

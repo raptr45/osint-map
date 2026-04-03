@@ -56,7 +56,7 @@ export default function ProfilePage() {
       {/* Background decoration */}
       <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(var(--primary),0.05),transparent_50%)] pointer-events-none" />
       
-      <header className="sticky top-0 w-full h-20 border-b border-border/50 bg-background/50 backdrop-blur-xl z-50 flex items-center px-10 justify-between">
+      <header className="sticky top-0 w-full h-20 border-b border-border/50 bg-background/50 backdrop-blur-xl z-50 flex items-center px-4 md:px-10 justify-between">
         <Link href="/" className="group flex items-center gap-2.5">
            <div className="w-10 h-10 rounded-2xl bg-secondary/40 flex items-center justify-center border border-border/10 transition-all group-hover:scale-110">
               <ArrowLeft className="w-5 h-5 text-foreground/60 transition-transform group-hover:-translate-x-1" />
@@ -69,19 +69,20 @@ export default function ProfilePage() {
            </div>
         </Link>
         
-        <Link href="/settings" className="flex items-center gap-2 px-4 h-10 rounded-xl bg-secondary/20 border border-border/10 text-[10px] font-black uppercase tracking-widest hover:bg-secondary/40 transition-all text-foreground">
+        <Link href="/settings" className="flex items-center gap-2 px-3 md:px-4 h-10 rounded-xl bg-secondary/20 border border-border/10 text-[10px] font-black uppercase tracking-widest hover:bg-secondary/40 transition-all text-foreground">
            <SettingsIcon className="w-3.5 h-3.5" />
-           System Settings
+           <span className="hidden md:inline">System Settings</span>
+           <span className="md:hidden">Settings</span>
         </Link>
       </header>
 
-      <main className="max-w-[800px] mx-auto py-16 px-8 flex flex-col items-center">
+      <main className="max-w-[800px] mx-auto py-10 md:py-16 px-4 md:px-8 flex flex-col items-center">
         {/* User Card */}
         <div className="w-full relative group">
            <div className="absolute inset-0 bg-primary/5 blur-[100px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-           <div className="relative glass-panel p-10 flex flex-col items-center text-center overflow-hidden border-border/20">
-              <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
-                 <ShieldCheck className="w-48 h-48 text-primary" />
+           <div className="relative glass-panel p-6 md:p-10 flex flex-col items-center text-center overflow-hidden border-border/20">
+              <div className="absolute top-0 right-0 p-4 md:p-8 opacity-[0.03] pointer-events-none">
+                 <ShieldCheck className="w-32 md:w-48 h-32 md:h-48 text-primary" />
               </div>
 
               <div className="relative mb-8">
@@ -106,7 +107,7 @@ export default function ProfilePage() {
                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{role} ACCESS AUTHORIZED</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 w-full pt-10 border-t border-border/10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full pt-10 border-t border-border/10">
                  <div className="flex flex-col items-center p-6 rounded-3xl bg-secondary/5 group/item hover:bg-secondary/10 transition-all border border-border/10">
                     <Mail className="w-5 h-5 text-muted-foreground/40 mb-3" />
                     <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest mb-1">Communication</span>
