@@ -1,6 +1,5 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
 import { 
   Users, 
   Map as MapIcon, 
@@ -46,7 +45,7 @@ export default function AdminOverview() {
     return (
       <div className="p-8 space-y-8 flex flex-col items-center justify-center min-h-[60vh] opacity-50">
         <Activity className="w-10 h-10 animate-pulse text-primary" />
-        <p className="text-xs font-bold uppercase tracking-widest">Establishing Secure Uplink...</p>
+        <p className="text-xs font-bold uppercase tracking-widest">Loading...</p>
       </div>
     );
   }
@@ -54,93 +53,104 @@ export default function AdminOverview() {
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight font-display mb-1">Command Overview</h1>
-        <p className="text-muted-foreground text-sm">System performance and intelligence throughput.</p>
+        <h1 className="text-3xl font-bold tracking-tight font-display mb-1">Admin Dashboard</h1>
+        <p className="text-muted-foreground text-sm">System activity and pipeline throughput.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat: EnrichedStat) => (
-          <Card key={stat.label} className="p-6 bg-card/40 backdrop-blur-xl border-border/40 hover:bg-card/60 transition-all cursor-default">
+          <div key={stat.label} className="tactical-card p-6 cursor-default group">
             <div className="flex items-center justify-between mb-4">
-              <div className={cn("p-2 rounded-lg bg-background/50 border border-border/40", stat.color)}>
+              <div className={cn("p-2 rounded-xl bg-background/50 border border-border/40 shadow-inner", stat.color)}>
                 <stat.icon className="w-5 h-5" />
               </div>
-              <span className="text-xs font-semibold text-emerald-500 flex items-center gap-1">
+              <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1 group-hover:scale-105 transition-transform">
                 <TrendingUp className="w-3 h-3" />
                 {stat.trend}
               </span>
             </div>
             <div className="space-y-1">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide leading-none mb-1">{stat.label}</h3>
+              <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">{stat.label}</h3>
               <p className="text-2xl font-bold tracking-tight font-display">{stat.value}</p>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-2 p-6 bg-card/40 backdrop-blur-xl border-border/40 min-h-[400px]">
+        <div className="tactical-card lg:col-span-2 p-6 flex flex-col justify-between min-h-[400px]">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h3 className="text-lg font-bold font-display tracking-tight">Intelligence Ingestion</h3>
-              <p className="text-xs text-muted-foreground">Messages processed per hour across all channels.</p>
+              <h3 className="text-lg font-bold font-display tracking-tight">Ingestion Activity</h3>
+              <p className="text-xs text-muted-foreground">Messages processed per hour across pipelines.</p>
             </div>
-            <Button asChild variant="outline" size="sm" className="h-8 text-xs font-semibold uppercase tracking-wide gap-2">
+            <Button asChild variant="outline" size="sm" className="tactical-btn h-8 px-4 bg-background/40">
                <Link href="/admin/logs">
-                Full Report <ExternalLink className="w-3 h-3" />
+                Logs <ExternalLink className="w-3.5 h-3.5" />
                </Link>
             </Button>
           </div>
           
-          <div className="h-[250px] flex items-end gap-2 px-2">
-             {(data?.chartData || [40, 65, 45, 90, 85, 60, 75, 50, 40, 80, 95, 70]).map((h: number, i: number) => (
-               <div key={i} className="flex-1 space-y-2 group cursor-pointer">
-                  <div className="relative h-full flex items-end">
-                    <div 
-                      className="w-full bg-primary/20 hover:bg-primary/40 rounded-t transition-all" 
-                      style={{ height: `${h}%` }}
-                    />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm rounded text-xs font-bold text-primary -top-8 h-8 border border-border/20 shadow-xl">
-                      {Math.floor(h * 1.5)} pts
+          <div className="h-[250px] flex items-end gap-2 px-2 relative py-4">
+             {(!data?.chartData || data.chartData.length === 0) ? (
+                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black uppercase text-muted-foreground/30 tracking-widest">
+                   No data yet
+                </div>
+             ) : (
+               data.chartData.map((h: number, i: number) => (
+                 <div key={i} className="flex-1 space-y-2 group cursor-pointer relative z-10 bottom-0 flex flex-col justify-end h-full">
+                    <div className="relative flex items-end flex-1 w-full justify-center">
+                      <div 
+                        className="w-full bg-primary/20 hover:bg-primary/40 rounded-t-sm transition-all outline outline-1 outline-primary/5" 
+                        style={{ height: `${Math.max(5, h)}%` }}
+                      />
+                      <div className="absolute flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-background/95 backdrop-blur-xl rounded-md text-[10px] font-black text-primary -top-10 h-8 px-2 border border-primary/20 shadow-xl tracking-widest z-20">
+                        {Math.floor(h * 1.5)}
+                      </div>
                     </div>
-                  </div>
-                  <div className="h-1 bg-border/20 rounded-full" />
-               </div>
-             ))}
+                    <div className="h-1 bg-border/20 rounded-full w-full" />
+                 </div>
+               ))
+             )}
           </div>
-          <div className="flex justify-between mt-4 px-1">
+          <div className="flex justify-between mt-4 px-1 border-t border-border/10 pt-4">
             {["08:00", "12:00", "16:00", "20:00", "00:00", "04:00"].map(t => (
-              <span key={t} className="text-xs font-medium text-muted-foreground">{t}</span>
+              <span key={t} className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">{t}</span>
             ))}
           </div>
-        </Card>
+        </div>
 
-        <Card className="p-6 bg-card/40 backdrop-blur-xl border-border/40">
+        <div className="tactical-card p-6 flex flex-col justify-between min-h-[400px]">
            <div className="space-y-6">
               {(data?.activity || []).map((act: AdminActivity, i: number) => (
-                <div key={i} className="flex gap-4 group">
+                <div key={i} className="flex gap-4 group cursor-pointer" onClick={() => window.location.href = `/admin/queue`}>
                   <div className="relative flex flex-col items-center">
-                    <div className={cn("w-2.5 h-2.5 rounded-full z-10", `bg-${act.status}-500 shadow-[0_0_8px_rgba(var(--${act.status}-500),0.5)]`)} />
-                    {data?.activity && i !== (data.activity.length - 1) && <div className="absolute top-2.5 w-[1px] h-full bg-border/20" />}
+                    <div className={cn("w-2.5 h-2.5 rounded-full z-10 transition-transform group-hover:scale-125", `bg-${act.status}-500 shadow-[0_0_8px_rgba(var(--${act.status}-500),0.8)]`)} />
+                    {data?.activity && i !== (data.activity.length - 1) && <div className="absolute top-2.5 w-[1px] h-full bg-border/20 group-hover:bg-primary/20 transition-colors" />}
                   </div>
                   <div className="flex-1 pb-4">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{act.type}</span>
-                      <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{act.type}</span>
+                      <span className="text-[9px] font-bold text-muted-foreground flex items-center gap-1 opacity-60">
                         <Clock className="w-2.5 h-2.5" /> {formatDistanceToNow(new Date(act.time))} ago
                       </span>
                     </div>
-                    <p className="text-xs font-medium group-hover:text-primary transition-colors cursor-default line-clamp-2">{act.label}</p>
+                    <p className="text-[11px] font-bold uppercase tracking-wide group-hover:text-primary transition-colors cursor-pointer line-clamp-2 leading-relaxed">{act.label}</p>
                   </div>
                 </div>
               ))}
+              {(!data?.activity || data.activity.length === 0) && (
+                 <div className="py-20 flex items-center justify-center text-[10px] uppercase font-black tracking-widest text-muted-foreground/30 text-center">
+                    No recent activity
+                 </div>
+              )}
            </div>
-           <Button asChild variant="ghost" className="w-full mt-4 text-xs font-semibold uppercase tracking-wide h-10 hover:bg-secondary">
-             <Link href="/admin/logs">
-                View Audit Log
+           <Button asChild variant="ghost" className="tactical-btn w-full mt-4 text-xs font-semibold uppercase tracking-wide h-10 hover:bg-secondary">
+             <Link href="/admin/queue">
+                View Queue
              </Link>
            </Button>
-        </Card>
+        </div>
       </div>
     </div>
   );

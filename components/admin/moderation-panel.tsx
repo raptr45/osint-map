@@ -99,8 +99,8 @@ export function ModerationPanel({
                 />
                 <h2 className="text-xs font-black uppercase tracking-widest text-foreground/70">
                   {selectedPending.status === "failed"
-                    ? "Enrichment Failure"
-                    : "Enrichment Protocol"}
+                    ? "AI Error"
+                    : "Review"}
                 </h2>
               </div>
               {selectedPending.status === "failed" && (
@@ -117,32 +117,32 @@ export function ModerationPanel({
               <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 flex items-center gap-3 text-destructive">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 <p className="text-xs font-medium">
-                  AI enrichment failed. Manual entry required below.
+                  AI processing failed. Please fill in the fields below manually.
                 </p>
               </div>
             )}
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">
-                Assigned Title
+                Title
               </label>
               <input
                 className="w-full bg-secondary/20 border border-border/30 rounded-xl p-3.5 text-sm font-black focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                placeholder="Pending designation..."
+                placeholder="Event title..."
               />
             </div>
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase text-muted-foreground/60 tracking-widest">
-                Summary SITREP
+                Description
               </label>
               <textarea
                 className="w-full bg-secondary/20 border border-border/30 rounded-xl p-3.5 text-sm h-36 resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all leading-relaxed font-medium"
                 value={editDesc}
                 onChange={(e) => setEditDesc(e.target.value)}
-                placeholder="Intelligence summary..."
+                placeholder="Brief description of the event..."
               />
             </div>
 
@@ -243,9 +243,9 @@ export function ModerationPanel({
                   )}
                   <Badge
                     variant="outline"
-                    className="text-xs font-black border-emerald-500/20 text-emerald-500 bg-emerald-500/5"
+                    className="text-xs font-black border-border/30 text-muted-foreground"
                   >
-                    ENCRYPTED
+                    RAW
                   </Badge>
                 </div>
               </div>
@@ -257,7 +257,7 @@ export function ModerationPanel({
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={selectedPending.imageUrl}
-                    alt="Signal Visual"
+                    alt="Attached image"
                     className="w-full max-h-48 object-cover"
                   />
                   <div className="p-2 bg-black/20 flex items-center gap-2">
@@ -489,7 +489,7 @@ export function ModerationPanel({
                   ) : (
                     <ShieldCheck className="w-4 h-4 stroke-[3]" />
                   )}{" "}
-                  Authorize
+                  Publish
                 </Button>
               </>
             )}
@@ -528,7 +528,7 @@ export function ModerationPanel({
         {/* ID display */}
         <div className="flex flex-col items-start gap-0.5 p-2 px-3.5 rounded-xl border border-border/10 bg-secondary/5">
           <span className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
-            Intel ID
+            Event ID
           </span>
           <span className="text-[11px] font-mono text-muted-foreground/60">
             {(activeTab === "pending"

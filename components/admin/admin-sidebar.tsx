@@ -138,7 +138,7 @@ export function AdminSidebar() {
               <ShieldCheck className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="font-bold text-xl tracking-tight uppercase text-foreground font-display transition-opacity duration-300 whitespace-nowrap">
-              Hub
+              Admin
             </span>
           </Link>
         )}

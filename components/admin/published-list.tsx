@@ -122,7 +122,7 @@ export function PublishedList({
       });
       const groupKey =
         sortBy === "severity"
-          ? "Severity Active"
+          ? "By Severity"
           : date;
       if (!groups[groupKey]) groups[groupKey] = [];
       groups[groupKey].push(item);
@@ -146,7 +146,7 @@ export function PublishedList({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground/30 group-focus-within:text-emerald-500 transition-colors" />
           <input
             type="text"
-            placeholder="SEARCH ACTIVE..."
+            placeholder="Search published events..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-secondary/10 border border-border/30 rounded-lg pl-8 pr-28 h-8 text-[10px] font-bold uppercase tracking-tight focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-all placeholder:text-muted-foreground/50"
