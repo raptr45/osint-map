@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { User as UserIcon, Loader2, Users, ShieldAlert, Shield, Eye } from "lucide-react";
@@ -47,10 +46,22 @@ export default function RoleRequestsPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight font-display mb-1 text-foreground">User Management</h1>
-        <p className="text-muted-foreground text-sm">Manage user accounts and role assignments.</p>
+    <div className="p-10 space-y-12 animate-in fade-in duration-700 font-sans max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-white/5">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-black tracking-tight font-display text-white">
+            User Management
+          </h1>
+          <p className="text-muted-foreground/60 text-sm font-medium tracking-wide uppercase">
+            Manage user accounts AND ACCESS PRIVILEGES
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="px-5 py-2.5 rounded-2xl bg-secondary/20 border border-white/5 backdrop-blur-xl flex items-center gap-3 shadow-xl">
+             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)] animate-pulse" />
+             <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Auth Service Online</span>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-6">
@@ -68,91 +79,105 @@ export default function RoleRequestsPage() {
             if (a.roleRequest !== "pending" && b.roleRequest === "pending") return 1;
             return 0;
           }).map((req) => (
-            <Card key={req.id} className="p-6 bg-card/30 backdrop-blur-xl border-border/40 hover:bg-card/40 transition-all group overflow-hidden relative shadow-lg">
-              <div className="absolute right-0 top-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                 <div className="text-xs font-bold text-muted-foreground uppercase bg-secondary/80 px-2 py-1 rounded border border-border/40 backdrop-blur-md">ID: {req.id}</div>
-              </div>
-
-              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                <div className="flex items-center gap-6">
-                  <div className="relative">
-                    <div className="w-16 h-16 rounded-2xl bg-secondary/50 flex items-center justify-center overflow-hidden border border-border/40 shadow-xl group-hover:scale-105 transition-transform">
-                        {req.image ? (
-                        <Image 
-                            src={req.image} 
-                            alt={`${req.name || 'User'}'s profile picture`}
-                            width={64}
-                            height={64}
-                            className="w-full h-full object-cover" 
-                        />
-                        ) : (
-                        <UserIcon className="w-8 h-8 text-muted-foreground/40" />
-                        )}
-                    </div>
-                    {req.roleRequest === "pending" && (
-                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full border-4 border-card animate-pulse shadow-lg shadow-amber-500/50" />
+            <div key={req.id} className="tactical-card group p-8 flex flex-col lg:flex-row items-center justify-between gap-8">
+              <div className="premium-glow" />
+              
+              <div className="flex items-center gap-8 relative z-10 w-full lg:w-auto">
+                {/* Profile Section */}
+                <div className="relative shrink-0">
+                  <div className="w-20 h-20 rounded-[2rem] bg-white/5 flex items-center justify-center overflow-hidden border-2 border-white/10 shadow-2xl transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+                    {req.image ? (
+                      <Image 
+                        src={req.image} 
+                        alt={req.name || 'User'}
+                        width={80}
+                        height={80}
+                        className="w-full h-full object-cover" 
+                      />
+                    ) : (
+                      <Users className="w-8 h-8 text-white/20" />
                     )}
                   </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-3">
-                        <h4 className="font-bold text-lg tracking-tight font-display uppercase leading-none">{req.name}</h4>
-                        {req.roleRequest === "pending" && (
-                            <Badge className="bg-amber-500 text-white border-none text-[11px] font-bold tracking-wide px-2 py-0.5 h-auto rounded-full shadow-lg shadow-amber-500/20">Role Requested</Badge>
-                        )}
-                    </div>
-                    <p className="text-xs text-muted-foreground font-mono font-medium opacity-80 uppercase tracking-wide">{req.email}</p>
-                    <div className="pt-1 flex items-center gap-2">
-                        {req.role === "owner" && <Badge variant="default" className="bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 text-[11px] uppercase font-bold tracking-wide px-2 py-0.5"><ShieldAlert className="w-3 h-3 mr-1.5" /> Owner</Badge>}
-                        {req.role === "admin" && <Badge variant="default" className="bg-destructive text-destructive-foreground shadow-lg shadow-destructive/20 text-[11px] uppercase font-bold tracking-wide px-2 py-0.5"><ShieldAlert className="w-3 h-3 mr-1.5" /> Admin</Badge>}
-                        {req.role === "moderator" && <Badge variant="default" className="bg-orange-500 text-white shadow-lg shadow-orange-500/20 text-[11px] uppercase font-bold tracking-wide px-2 py-0.5"><Shield className="w-3 h-3 mr-1.5" /> Moderator</Badge>}
-                        {req.role === "analyst" && <Badge variant="default" className="bg-blue-500 text-white shadow-lg shadow-blue-500/20 text-[11px] uppercase font-bold tracking-wide px-2 py-0.5"><Eye className="w-3 h-3 mr-1.5" /> Analyst</Badge>}
-                        {req.role === "user" && <Badge variant="outline" className="text-muted-foreground text-[11px] uppercase font-bold tracking-wide px-2 py-0.5 border-border/40"><UserIcon className="w-3 h-3 mr-1.5" /> Basic User</Badge>}
-                    </div>
-                  </div>
+                  {req.roleRequest === "pending" && (
+                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-amber-500 rounded-full border-4 border-[#121214] animate-pulse shadow-xl shadow-amber-500/40" />
+                  )}
                 </div>
 
-                {req.role !== "owner" && (
-                  <div className="flex flex-col items-end gap-2 w-full lg:w-auto mt-4 lg:mt-0 pt-4 border-t border-border/10 lg:border-none lg:pt-0">
-                    <span className="text-[11px] font-bold uppercase text-muted-foreground/50 tracking-wide">Assign Role</span>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleAction(req.id, "demote")} 
-                        className={cn("h-8 text-[11px] font-bold uppercase tracking-wide rounded-lg transition-all", req.role === "user" ? "bg-secondary text-secondary-foreground border-transparent" : "text-muted-foreground border-border/20 hover:bg-secondary/20")}
-                      >
-                        User
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleAction(req.id, "approve_analyst")} 
-                        className={cn("h-8 text-[11px] font-bold uppercase tracking-wide rounded-lg transition-all", req.role === "analyst" ? "bg-blue-500 text-white border-blue-500/50 shadow-lg shadow-blue-500/20" : "text-muted-foreground border-border/20 hover:bg-blue-500/10 hover:text-blue-500")}
-                      >
-                        Analyst
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleAction(req.id, "approve_moderator")} 
-                        className={cn("h-8 text-[11px] font-bold uppercase tracking-wide rounded-lg transition-all", req.role === "moderator" ? "bg-orange-500 text-white border-orange-500/50 shadow-lg shadow-orange-500/20" : "text-muted-foreground border-border/20 hover:bg-orange-500/10 hover:text-orange-500")}
-                      >
-                        Moderator
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleAction(req.id, "approve_admin")} 
-                        className={cn("h-8 text-[11px] font-bold uppercase tracking-wide rounded-lg transition-all", req.role === "admin" ? "bg-destructive text-destructive-foreground border-destructive/50 shadow-lg shadow-destructive/20" : "text-destructive/50 border-destructive/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30")}
-                      >
-                        Admin
-                      </Button>
-                    </div>
+                <div className="flex-1 space-y-3 min-w-0">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <h3 className="font-black text-2xl font-display tracking-tight text-white/90 truncate group-hover:text-primary transition-colors uppercase leading-none">
+                      {req.name}
+                    </h3>
+                    {req.roleRequest === "pending" && (
+                      <div className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-[10px] font-black text-amber-500 uppercase tracking-widest shadow-lg shadow-amber-500/10">
+                        Elevation Requested
+                      </div>
+                    )}
                   </div>
-                )}
+                  
+                  <p className="text-xs text-muted-foreground/60 font-mono font-medium tracking-widest uppercase truncate max-w-md">
+                    {req.email}
+                  </p>
+
+                  <div className="flex items-center gap-3 pt-1">
+                    {req.role === "owner" && (
+                      <div className="tactical-badge bg-primary text-primary-foreground border-transparent shadow-primary/20 flex items-center gap-2">
+                        <ShieldAlert className="w-3.5 h-3.5" /> OWNER
+                      </div>
+                    )}
+                    {req.role === "admin" && (
+                      <div className="tactical-badge bg-rose-500/10 border-rose-500/30 text-rose-500 flex items-center gap-2">
+                        <Shield className="w-3.5 h-3.5" /> ADMINISTRATOR
+                      </div>
+                    )}
+                    {req.role === "moderator" && (
+                      <div className="tactical-badge bg-amber-500/10 border-amber-500/30 text-amber-500 flex items-center gap-2">
+                        <Shield className="w-3.5 h-3.5" /> MODERATOR
+                      </div>
+                    )}
+                    {req.role === "analyst" && (
+                      <div className="tactical-badge bg-blue-500/10 border-blue-500/30 text-blue-500 flex items-center gap-2">
+                        <Eye className="w-3.5 h-3.5" /> ANALYST
+                      </div>
+                    )}
+                    {req.role === "user" && (
+                      <div className="tactical-badge bg-white/5 border-white/5 text-white/30 flex items-center gap-2">
+                        <UserIcon className="w-3.5 h-3.5" /> REGULAR USER
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-            </Card>
+
+              {/* Controls Section */}
+              {req.role !== "owner" && (
+                <div className="flex flex-col items-end gap-4 w-full lg:w-auto relative z-10 pt-6 lg:pt-0 border-t lg:border-none border-white/5">
+                  <span className="text-[10px] font-black uppercase text-muted-foreground/30 tracking-[0.2em] mr-2">Assign Role Elevation</span>
+                  <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-xl">
+                    {(["user", "analyst", "moderator", "admin"] as const).map((role) => {
+                      const actionMap = { user: "demote", analyst: "approve_analyst", moderator: "approve_moderator", admin: "approve_admin" };
+                      const colorMap = { user: "bg-white/5 text-white/40 hover:text-white hover:bg-white/10", analyst: "bg-blue-500/10 text-blue-500/60 hover:text-blue-400 hover:bg-blue-500/20", moderator: "bg-amber-500/10 text-amber-500/60 hover:text-amber-400 hover:bg-amber-500/20", admin: "bg-rose-500/10 text-rose-500/60 hover:text-rose-400 hover:bg-rose-500/20" };
+                      const activeColorMap = { user: "bg-white/20 text-white border-white/20 shadow-xl", analyst: "bg-blue-500 text-white border-blue-500/20 shadow-xl shadow-blue-500/20", moderator: "bg-amber-500 text-white border-amber-500/20 shadow-xl shadow-amber-500/20", admin: "bg-rose-500 text-white border-rose-500/20 shadow-xl shadow-rose-500/20" };
+                      
+                      return (
+                        <Button 
+                          key={role}
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleAction(req.id, actionMap[role])} 
+                          className={cn(
+                            "h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                            req.role === role ? activeColorMap[role] : colorMap[role]
+                          )}
+                        >
+                          {role}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           ))
         )}
       </div>

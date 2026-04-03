@@ -1,5 +1,9 @@
 "use client";
 
+import { ModerationPanel } from "@/components/admin/moderation-panel";
+import { PendingList } from "@/components/admin/pending-list";
+import { PublishedList } from "@/components/admin/published-list";
+import { QueueMap } from "@/components/admin/queue-map";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,6 +19,12 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { authClient } from "@/lib/auth-client";
+import {
+  useAdminQueue,
+  useAdminSettings,
+  usePublishedEvents,
+} from "@/lib/queries/events";
+import { useQueueStore } from "@/lib/stores/queue-store";
 import { cn } from "@/lib/utils";
 import {
   Activity,
@@ -30,16 +40,6 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import type { MapRef } from "react-map-gl/maplibre";
-import {
-  useAdminQueue,
-  usePublishedEvents,
-  useAdminSettings,
-} from "@/lib/queries/events";
-import { PendingList } from "@/components/admin/pending-list";
-import { PublishedList } from "@/components/admin/published-list";
-import { ModerationPanel } from "@/components/admin/moderation-panel";
-import { QueueMap } from "@/components/admin/queue-map";
-import { useQueueStore } from "@/lib/stores/queue-store";
 
 export default function ModerationQueue() {
   const { data: session } = authClient.useSession();
@@ -55,11 +55,7 @@ export default function ModerationQueue() {
   );
 
   // Pending queue
-  const {
-    data: queue,
-    refetch: mutate,
-    isLoading,
-  } = useAdminQueue();
+  const { data: queue, refetch: mutate, isLoading } = useAdminQueue();
   // Published events
   const {
     data: published,
@@ -143,7 +139,9 @@ export default function ModerationQueue() {
   const [sortByPublished, setSortByPublished] = React.useState<
     "date" | "severity" | "title"
   >("date");
-  const [sortOrderPublished, setSortOrderPublished] = React.useState<"asc" | "desc">("desc");
+  const [sortOrderPublished, setSortOrderPublished] = React.useState<
+    "asc" | "desc"
+  >("desc");
   const [isLayoutLoaded, setIsLayoutLoaded] = React.useState(false);
   const [mainLayout, setMainLayout] = React.useState<
     Record<string, number> | undefined
@@ -207,7 +205,16 @@ export default function ModerationQueue() {
       }
       lastPendingId.current = selectedPending.id;
     }
-  }, [selectedPending, setEditTitle, setEditDesc, setEditPos, setEditSourceUrl, setEditSeverity, setEditEventType, setEditEventTime]);
+  }, [
+    selectedPending,
+    setEditTitle,
+    setEditDesc,
+    setEditPos,
+    setEditSourceUrl,
+    setEditSeverity,
+    setEditEventType,
+    setEditEventTime,
+  ]);
 
   // Sync published edit state
   React.useEffect(() => {
@@ -253,7 +260,17 @@ export default function ModerationQueue() {
       }
       lastPublishedId.current = selectedPublished.id;
     }
-  }, [selectedPublished, setPubTitle, setPubDesc, setPubPos, setPubSourceUrl, setPubImageUrl, setPubSeverity, setPubEventType, setPubEventTime]);
+  }, [
+    selectedPublished,
+    setPubTitle,
+    setPubDesc,
+    setPubPos,
+    setPubSourceUrl,
+    setPubImageUrl,
+    setPubSeverity,
+    setPubEventType,
+    setPubEventTime,
+  ]);
 
   // Live stream for new events
   React.useEffect(() => {
@@ -446,59 +463,62 @@ export default function ModerationQueue() {
   return (
     <div className="h-screen flex flex-col bg-background font-sans overflow-hidden">
       {/* Header */}
-      <header className="h-14 border-b border-border/40 bg-background/50 backdrop-blur-3xl flex items-center justify-between px-6 z-20 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4 text-primary" />
+      <header className="h-20 border-b border-white/5 bg-background/40 backdrop-blur-[40px] flex items-center justify-between px-10 z-30 shrink-0 relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
+        <div className="flex items-center gap-6 relative z-10">
+          <div className="flex items-center gap-5">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-2xl shadow-primary/10">
+              <ShieldCheck className="w-6 h-6 text-primary" />
             </div>
             <div className="flex flex-col">
-              <h1 className="text-[11px] font-black tracking-[0.2em] uppercase font-display leading-none text-foreground/90">
-                Moderation Queue
+              <h1 className="text-2xl font-black tracking-tight font-display text-white uppercase leading-none">
+                Moderation
               </h1>
-              <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1">
-                Admin
-              </span>
+              <p className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.3em] mt-1.5 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
+                Admin Queue
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6 relative z-10">
           {/* AI Provider */}
-          <div className="flex items-center gap-1 bg-secondary/20 p-0.5 rounded-lg border border-border/30">
+          <div className="flex items-center gap-1.5 bg-white/5 p-1.5 rounded-2xl border border-white/5 shadow-2xl">
             {(["gemini", "openai"] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => handleProviderSwitch(p)}
                 disabled={isSwitchingProvider}
                 className={cn(
-                  "flex items-center gap-1.5 px-2.5 h-6 rounded-md text-[9px] font-black uppercase tracking-widest transition-all",
+                  "flex items-center gap-2 px-5 h-9 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
                   settings?.provider === p
-                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-primary text-primary-foreground shadow-xl shadow-primary/30"
+                    : "text-muted-foreground/60 hover:text-white hover:bg-white/5"
                 )}
               >
                 {isSwitchingProvider && settings?.provider !== p ? (
-                  <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <Brain className="w-2.5 h-2.5" />
+                  <Brain className="w-3.5 h-3.5" />
                 )}
-                {p === "gemini" ? "Gemini" : "GPT-4o"}
+                <span className="hidden lg:inline">
+                  {p === "gemini" ? "Google Gemini" : "OpenAI GPT-4o"}
+                </span>
+                <span className="lg:hidden uppercase">{p[0]}</span>
               </button>
             ))}
           </div>
 
-          <div className="h-6 w-px bg-border/40" />
-
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {canPurge && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => setShowClearDialog(true)}
-                className="h-8 rounded-lg px-3 text-[10px] font-black uppercase text-destructive/60 hover:text-destructive hover:bg-destructive/10"
+                className="h-11 px-5 rounded-xl text-[10px] font-black uppercase border-rose-500/10 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/30 transition-all duration-300"
               >
-                <Trash2 className="w-3 h-3 mr-2" /> Purge
+                <Trash2 className="w-4 h-4 mr-2" /> Clear All
               </Button>
             )}
             {canAddCustomEvent && (
@@ -506,9 +526,9 @@ export default function ModerationQueue() {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowManualDialog(true)}
-                className="h-8 rounded-lg px-3 text-[10px] font-black uppercase border-primary/20 text-primary bg-primary/5 hover:bg-primary/10"
+                className="tactical-btn-outline h-11 px-6"
               >
-                <Edit3 className="w-3 h-3 mr-2" /> Add Event
+                <Edit3 className="w-4 h-4 mr-2" /> New Event
               </Button>
             )}
             <Button
@@ -518,10 +538,10 @@ export default function ModerationQueue() {
                 mutate();
                 mutatePublished();
               }}
-              className="h-8 w-8 p-0 rounded-lg bg-secondary/20 hover:bg-secondary/40 border-border/30"
-              title="Refresh"
+              className="h-11 w-11 p-0 rounded-xl bg-white/5 hover:bg-white/10 border-white/5 transition-all duration-300 group/refresh"
+              title="Refresh Data"
             >
-              <RefreshCcw className="w-3 h-3" />
+              <RefreshCcw className="w-4 h-4 text-muted-foreground group-active/refresh:rotate-180 transition-transform duration-500" />
             </Button>
           </div>
         </div>
@@ -551,9 +571,9 @@ export default function ModerationQueue() {
               id="queue-sidebar-panel"
             >
               <div className="w-full h-full border-r border-border/30 flex flex-col bg-card/5">
-                {/* Tab Navigator */}
-                <div className="p-3 bg-background/50 border-b border-border/20">
-                  <div className="bg-secondary/20 p-1 rounded-xl flex gap-1 border border-border/10">
+                <div className="p-6 bg-primary/5 border-b border-white/5 relative overflow-hidden group/tabs">
+                  <div className="absolute inset-0 bg-gradient-to-b from-white/2 to-transparent pointer-events-none" />
+                  <div className="bg-white/5 p-1.5 rounded-2xl flex gap-1.5 border border-white/5 shadow-2xl relative z-10">
                     {(
                       [
                         {
@@ -561,34 +581,41 @@ export default function ModerationQueue() {
                           label: "Queue",
                           count: queue?.length,
                           icon: AlertTriangle,
+                          color: "amber-500",
                         },
                         {
                           key: "published",
-                          label: "Active",
+                          label: "Published",
                           count: published?.length,
                           icon: CheckCircle2,
+                          color: "emerald-500",
                         },
                       ] as const
-                    ).map(({ key, label, count, icon: Icon }) => (
+                    ).map(({ key, label, count, icon: Icon, color }) => (
                       <button
                         key={key}
                         onClick={() => setActiveTab(key)}
                         className={cn(
-                          "flex-1 flex items-center justify-center gap-2 h-8 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                          "flex-1 flex items-center justify-center gap-3 h-11 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-500 relative overflow-hidden",
                           activeTab === key
-                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                            ? "bg-primary text-primary-foreground shadow-xl shadow-primary/30"
+                            : "text-foreground/60 hover:bg-white/5 hover:text-white"
                         )}
                       >
-                        <Icon className="w-3 h-3" />
-                        {label}
+                        <Icon
+                          className={cn(
+                            "w-4 h-4",
+                            activeTab === key ? "text-white" : "opacity-40"
+                          )}
+                        />
+                        <span className="hidden lg:inline">{label}</span>
                         {count !== undefined && (
                           <span
                             className={cn(
-                              "px-1.5 py-0.5 rounded-md text-[8px] font-bold min-w-[18px]",
+                              "px-2 py-0.5 rounded-lg text-[9px] font-black min-w-[22px] flex items-center justify-center transition-all",
                               activeTab === key
-                                ? "bg-primary-foreground/20 text-primary-foreground"
-                                : "bg-black/20 text-muted-foreground"
+                                ? "bg-white/20 text-white"
+                                : "bg-white/5 text-muted-foreground/30"
                             )}
                           >
                             {count}

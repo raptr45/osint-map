@@ -22,6 +22,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import * as React from "react";
+import { formatDistanceToNow } from "date-fns";
 
 import { ICON_MAPPING, EVENT_TYPE_LABELS } from "@/lib/constants";
 import { deriveEventType } from "@/components/map/map-view";
@@ -55,8 +56,13 @@ export function MapPopup({
     event.eventType && event.eventType !== "unknown" ? event.eventType : deriveEventType(event.title)
   );
 
-  const formatTime = (dateStr: string) =>
-    new Date(dateStr).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const formatTime = (dateStr: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateStr), { addSuffix: true });
+    } catch {
+      return "just now";
+    }
+  };
 
   if (isEditing) {
     return (

@@ -37,8 +37,8 @@ export default async function Home() {
               <span className="font-bold text-lg tracking-tight hidden sm:block uppercase text-foreground font-display leading-none">
                 OSINT MAP
               </span>
-              <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-widest leading-none mt-1 opacity-60 hidden sm:block">
-                Tactical Node
+              <span className="text-[10px] font-bold text-foreground/60 uppercase tracking-[0.2em] leading-none mt-1.5 hidden sm:block">
+                {new Date().toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric" })}
               </span>
             </div>
           </div>
