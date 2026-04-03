@@ -132,7 +132,7 @@ export function MapSidebar({
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-60" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
             </span>
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground">
               {clusterFilter
                 ? `Cluster Sync (${clusterFilter.length})`
                 : "Live Events Feed"}
@@ -191,7 +191,7 @@ export function MapSidebar({
               className="flex items-center justify-between w-full group/ov"
             >
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white group-hover/ov:text-primary transition-colors">
+                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/90 group-hover/ov:text-primary transition-colors">
                   Theater Overview
                 </span>
                 <ChevronRight className={cn("w-3 h-3 text-white/20 transition-transform duration-300", isOverviewOpen && "rotate-90")} />
@@ -246,10 +246,10 @@ export function MapSidebar({
             Object.entries(groupedEvents).map(([date, dayEvents]) => (
               <div key={date} className="space-y-3">
                 <div className="sticky top-0 bg-background/80 backdrop-blur-xl py-3 z-10 flex items-center gap-4">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-white">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-foreground/90">
                     {date}
                   </span>
-                  <div className="h-px flex-1 bg-white/10" />
+                  <div className="h-px flex-1 bg-border/20" />
                 </div>
                 {dayEvents.map((e) => (
                   <div

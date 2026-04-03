@@ -160,7 +160,7 @@ export function AdminSidebar() {
         )}
       >
         {isVisuallyExpanded && (
-          <div className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em] px-4 mb-4 whitespace-nowrap">
+          <div className="text-[10px] font-black text-muted-foreground/70 uppercase tracking-[0.2em] px-4 mb-4 whitespace-nowrap">
             Administration
           </div>
         )}
@@ -285,13 +285,17 @@ export function AdminSidebar() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href="/settings" className="flex items-center w-full">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href="/profile" className="flex items-center w-full">
+                <User className="mr-2 h-4 w-4" />
+                <span>User Profile</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

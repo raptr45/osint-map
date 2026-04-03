@@ -31,6 +31,14 @@ export default function RootLayout({
       <body
         className={`${jakarta.variable} ${inter.variable} font-sans antialiased`}
       >
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            try {
+              const scheme = localStorage.getItem("osint-map-scheme") || "indigo";
+              document.documentElement.setAttribute("data-scheme", scheme);
+            } catch (e) {}
+          })()
+        `}} />
         <Providers>
           <ThemeProvider
             attribute="class"
