@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -136,7 +135,15 @@ export default function ModerationQueue() {
   const [manualSourceUrl, setManualSourceUrl] = React.useState("");
   const [manualImageUrl, setManualImageUrl] = React.useState("");
   const [isIngestingManual, setIsIngestingManual] = React.useState(false);
-  const [sortBy, setSortBy] = React.useState<"date" | "source">("date");
+  const [sortBy, setSortBy] = React.useState<"date" | "source" | "status">(
+    "date"
+  );
+  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("desc");
+
+  const [sortByPublished, setSortByPublished] = React.useState<
+    "date" | "severity" | "title"
+  >("date");
+  const [sortOrderPublished, setSortOrderPublished] = React.useState<"asc" | "desc">("desc");
   const [isLayoutLoaded, setIsLayoutLoaded] = React.useState(false);
   const [mainLayout, setMainLayout] = React.useState<
     Record<string, number> | undefined
@@ -439,141 +446,88 @@ export default function ModerationQueue() {
   return (
     <div className="h-screen flex flex-col bg-background font-sans overflow-hidden">
       {/* Header */}
-      <header className="h-16 border-b border-border/40 bg-background/50 backdrop-blur-3xl flex items-center justify-between px-8 z-20 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/25">
-            <ShieldCheck className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="text-sm font-black tracking-widest uppercase font-display leading-none flex items-center gap-2">
-              Tactical Response Hub
-              <Badge
-                variant="outline"
-                className="h-5 text-xs font-black border-primary/30 text-primary bg-primary/5 uppercase"
-              >
-                Admin v2
-              </Badge>
-            </h1>
-            <span className="text-xs font-black text-muted-foreground/60 uppercase tracking-[0.2em] leading-none mt-1 opacity-80">
-              Geospatial Intelligence (MOD)
-            </span>
+      <header className="h-14 border-b border-border/40 bg-background/50 backdrop-blur-3xl flex items-center justify-between px-6 z-20 shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <ShieldCheck className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-[11px] font-black tracking-[0.2em] uppercase font-display leading-none text-foreground/90">
+                Tactical Response Hub
+              </h1>
+              <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest mt-1">
+                Admin Console <span className="opacity-30">/</span> v2.4
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Signals count */}
-          <div className="flex items-center gap-2 bg-secondary/30 px-3 py-1.5 rounded-xl border border-border/40">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-            <span className="text-xs font-black text-foreground/80">
-              {queue?.length || 0} pending · {published?.length || 0} published
-            </span>
-          </div>
+        <div className="flex items-center gap-4">
           {/* AI Provider */}
-          <div className="flex items-center gap-1 bg-secondary/20 p-1 rounded-xl border border-border/30">
+          <div className="flex items-center gap-1 bg-secondary/20 p-0.5 rounded-lg border border-border/30">
             {(["gemini", "openai"] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => handleProviderSwitch(p)}
                 disabled={isSwitchingProvider}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 h-7 rounded-lg text-xs font-black uppercase tracking-widest transition-all",
+                  "flex items-center gap-1.5 px-2.5 h-6 rounded-md text-[9px] font-black uppercase tracking-widest transition-all",
                   settings?.provider === p
-                    ? "bg-primary text-primary-foreground shadow"
+                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {isSwitchingProvider && settings?.provider !== p ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <Loader2 className="w-2.5 h-2.5 animate-spin" />
                 ) : (
-                  <Brain className="w-3 h-3" />
+                  <Brain className="w-2.5 h-2.5" />
                 )}
                 {p === "gemini" ? "Gemini" : "GPT-4o"}
-                {p === "openai" && !settings?.hasOpenAIKey && (
-                  <span className="text-destructive/70">⚠</span>
-                )}
               </button>
             ))}
           </div>
-          {canPurge && (
+
+          <div className="h-6 w-px bg-border/40" />
+
+          <div className="flex items-center gap-2">
+            {canPurge && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowClearDialog(true)}
+                className="h-8 rounded-lg px-3 text-[10px] font-black uppercase text-destructive/60 hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="w-3 h-3 mr-2" /> Purge
+              </Button>
+            )}
+            {canAddCustomEvent && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowManualDialog(true)}
+                className="h-8 rounded-lg px-3 text-[10px] font-black uppercase border-primary/20 text-primary bg-primary/5 hover:bg-primary/10"
+              >
+                <Edit3 className="w-3 h-3 mr-2" /> Manual Ingest
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowClearDialog(true)}
-              className="gap-2 h-9 rounded-md px-4 text-xs font-black uppercase text-destructive/80 border-destructive/20 hover:bg-destructive/10 bg-destructive/5"
+              onClick={() => {
+                mutate();
+                mutatePublished();
+              }}
+              className="h-8 w-8 p-0 rounded-lg bg-secondary/20 hover:bg-secondary/40 border-border/30"
+              title="Sync Operations"
             >
-              <Trash2 className="w-3.5 h-3.5" /> Purge Queue
+              <RefreshCcw className="w-3 h-3" />
             </Button>
-          )}
-          {canAddCustomEvent && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowManualDialog(true)}
-              className="gap-2 h-9 rounded-md px-4 text-xs font-black uppercase text-primary/80 border-primary/20 hover:bg-primary/10 bg-primary/5"
-            >
-              <Edit3 className="w-3.5 h-3.5" /> Manual Intel
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              mutate();
-              mutatePublished();
-            }}
-            className="gap-2 h-9 rounded-md px-4 text-xs font-black uppercase bg-secondary/20 hover:bg-secondary/40"
-          >
-            <RefreshCcw className="w-3.5 h-3.5" /> Sync Ops
-          </Button>
+          </div>
         </div>
       </header>
 
-      {/* Tab Bar */}
-      <div className="h-12 border-b border-border/30 bg-background/30 backdrop-blur-xl flex items-center gap-1 px-4 shrink-0">
-        {(
-          [
-            {
-              key: "pending",
-              label: "Pending Events",
-              count: queue?.length,
-              icon: AlertTriangle,
-            },
-            {
-              key: "published",
-              label: "Published Events",
-              count: published?.length,
-              icon: CheckCircle2,
-            },
-          ] as const
-        ).map(({ key, label, count, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
-            className={cn(
-              "flex items-center gap-2 px-4 h-8 rounded-lg text-xs font-black uppercase tracking-widest transition-all",
-              activeTab === key
-                ? "bg-primary text-primary-foreground shadow"
-                : "text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
-            )}
-          >
-            <Icon className="w-3 h-3" />
-            {label}
-            {count !== undefined && (
-              <span
-                className={cn(
-                  "px-1.5 py-0.5 rounded-full text-[9px] font-black",
-                  activeTab === key
-                    ? "bg-primary-foreground/20 text-primary-foreground"
-                    : "bg-secondary text-muted-foreground"
-                )}
-              >
-                {count}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
+      {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         {!isLayoutLoaded ? (
           <div className="flex-1 flex items-center justify-center">
@@ -589,38 +543,63 @@ export default function ModerationQueue() {
               localStorage.setItem("osint-queue-main-v1", JSON.stringify(l));
             }}
           >
-            {/* Left: List */}
+            {/* Left: List Sidebar */}
             <ResizablePanel
               defaultSize="25"
               minSize="18"
               maxSize="40"
               id="queue-sidebar-panel"
             >
-              <div className="w-full h-full border-r border-border/30 flex flex-col bg-card/10">
-                {/* Sort bar (pending only) */}
-                {activeTab === "pending" && (
-                  <div className="p-3 border-b border-border/10 flex items-center justify-between bg-background/20 shrink-0">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">
-                      Sort
-                    </span>
-                    <div className="flex gap-1">
-                      {(["date", "source"] as const).map((s) => (
-                        <button
-                          key={s}
-                          onClick={() => setSortBy(s)}
-                          className={cn(
-                            "px-2 py-0.5 rounded text-[9px] font-black uppercase transition-all",
-                            sortBy === s
-                              ? "bg-primary text-primary-foreground"
-                              : "text-muted-foreground hover:bg-secondary"
-                          )}
-                        >
-                          {s}
-                        </button>
-                      ))}
-                    </div>
+              <div className="w-full h-full border-r border-border/30 flex flex-col bg-card/5">
+                {/* Tactical Tab Navigator */}
+                <div className="p-3 bg-background/50 border-b border-border/20">
+                  <div className="bg-secondary/20 p-1 rounded-xl flex gap-1 border border-border/10">
+                    {(
+                      [
+                        {
+                          key: "pending",
+                          label: "Queue",
+                          count: queue?.length,
+                          icon: AlertTriangle,
+                        },
+                        {
+                          key: "published",
+                          label: "Active",
+                          count: published?.length,
+                          icon: CheckCircle2,
+                        },
+                      ] as const
+                    ).map(({ key, label, count, icon: Icon }) => (
+                      <button
+                        key={key}
+                        onClick={() => setActiveTab(key)}
+                        className={cn(
+                          "flex-1 flex items-center justify-center gap-2 h-8 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                          activeTab === key
+                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        )}
+                      >
+                        <Icon className="w-3 h-3" />
+                        {label}
+                        {count !== undefined && (
+                          <span
+                            className={cn(
+                              "px-1.5 py-0.5 rounded-md text-[8px] font-bold min-w-[18px]",
+                              activeTab === key
+                                ? "bg-primary-foreground/20 text-primary-foreground"
+                                : "bg-black/20 text-muted-foreground"
+                            )}
+                          >
+                            {count}
+                          </span>
+                        )}
+                      </button>
+                    ))}
                   </div>
-                )}
+                </div>
+
+                {/* Sub-header area for Search/Sort inside the list components */}
 
                 <div className="flex-1 overflow-hidden p-0">
                   {/* PENDING LIST */}
@@ -632,6 +611,8 @@ export default function ModerationQueue() {
                       onSelect={(id) => setSelectedPendingId(id)}
                       sortBy={sortBy}
                       onSortChange={setSortBy}
+                      sortOrder={sortOrder}
+                      onSortOrderChange={setSortOrder}
                       formatRelativeTime={formatRelativeTime}
                     />
                   )}
@@ -644,6 +625,10 @@ export default function ModerationQueue() {
                       selectedPublishedId={selectedPublishedId}
                       onSelect={(id) => setSelectedPublishedId(id)}
                       formatRelativeTime={formatRelativeTime}
+                      sortBy={sortByPublished}
+                      onSortChange={setSortByPublished}
+                      sortOrder={sortOrderPublished}
+                      onSortOrderChange={setSortOrderPublished}
                     />
                   )}
                 </div>
