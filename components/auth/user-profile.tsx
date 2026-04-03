@@ -1,12 +1,6 @@
 "use client";
 
-import { authClient } from "@/lib/auth-client";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, User as UserIcon, Monitor, Moon, Sun, Settings, Heart, ShieldCheck } from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
-import { useTheme } from "next-themes";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +10,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import {
+  Heart,
+  LogOut,
+  Monitor,
+  Moon,
+  Settings as SettingsIcon,
+  ShieldCheck,
+  Sun,
+  User as UserIcon,
+} from "lucide-react";
+import { useTheme } from "next-themes";
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
 
 interface SessionUser {
   id: string;
@@ -46,14 +55,16 @@ export function UserProfile() {
   };
 
   if (isPending) {
-    return (
-      <div className="h-10 w-10 animate-pulse bg-muted rounded-full" />
-    );
+    return <div className="h-10 w-10 animate-pulse bg-muted rounded-full" />;
   }
 
   if (!session) {
     return (
-      <Button asChild variant="default" className="rounded-full px-6 transition-all hover:scale-105 active:scale-95">
+      <Button
+        asChild
+        variant="default"
+        className="rounded-full px-6 transition-all hover:scale-105 active:scale-95"
+      >
         <Link href="/auth/sign-in">Sign In</Link>
       </Button>
     );
@@ -62,14 +73,17 @@ export function UserProfile() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 overflow-hidden ring-offset-background transition-all hover:ring-2 hover:ring-primary/20">
+        <Button
+          variant="ghost"
+          className="relative h-10 w-10 rounded-full p-0 overflow-hidden ring-offset-background transition-all hover:ring-2 hover:ring-primary/20"
+        >
           {session.user.image ? (
-            <Image 
-              src={session.user.image} 
-              alt={session.user.name} 
-              width={40} 
-              height={40} 
-              className="aspect-square h-full w-full object-cover" 
+            <Image
+              src={session.user.image}
+              alt={session.user.name}
+              width={40}
+              height={40}
+              className="aspect-square h-full w-full object-cover"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-muted">
@@ -78,40 +92,47 @@ export function UserProfile() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      
-      <DropdownMenuContent className="w-64 p-2 mt-2 backdrop-blur-xl bg-card/80 border-border/50" align="end">
+
+      <DropdownMenuContent
+        className="w-64 p-2 mt-2 backdrop-blur-xl bg-card/80 border-border/50"
+        align="end"
+      >
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-2 p-2">
             <div className="flex flex-col space-y-1">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-bold leading-none">{user?.name}</p>
                 {user?.role === "admin" && (
-                  <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">ADMIN</span>
+                  <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">
+                    ADMIN
+                  </span>
                 )}
               </div>
               {user?.role === "user" && user?.roleRequest && (
                 <div className="flex items-center gap-1.5 mt-1">
-                  <span className={cn(
-                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full border",
-                    user.roleRequest === "pending" 
-                      ? "bg-amber-500/10 text-amber-500 border-amber-500/20" 
-                      : "bg-destructive/10 text-destructive border-destructive/20"
-                  )}>
-                    {user.roleRequest === "pending" ? "PENDING APPROVAL" : "REQUEST REJECTED"}
+                  <span
+                    className={cn(
+                      "text-[9px] font-bold px-1.5 py-0.5 rounded-full border",
+                      user.roleRequest === "pending"
+                        ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                        : "bg-destructive/10 text-destructive border-destructive/20"
+                    )}
+                  >
+                    {user.roleRequest === "pending"
+                      ? "PENDING APPROVAL"
+                      : "REQUEST REJECTED"}
                   </span>
                 </div>
               )}
             </div>
             <p className="text-xs leading-none text-muted-foreground">
-              @{user?.email.split('@')[0]}
+              @{user?.email.split("@")[0]}
             </p>
           </div>
         </DropdownMenuLabel>
-        
-        <DropdownMenuSeparator className="bg-border/50" />
-        
-        <div className="p-2">
-          <div className="flex items-center justify-between px-2 py-1.5">
+
+        <div className="p-2 space-y-1">
+          <div className="flex items-center justify-between px-2 py-1.5 mt-1 border-t border-border/20 pt-3">
             <div className="flex items-center gap-2">
               <div className="flex h-6 w-6 items-center justify-center rounded-md bg-secondary text-muted-foreground">
                 <Sun className="h-3.5 w-3.5 block dark:hidden" />
@@ -119,13 +140,15 @@ export function UserProfile() {
               </div>
               <span className="text-sm font-medium">Theme</span>
             </div>
-            
+
             <div className="flex items-center gap-1 bg-secondary p-1 rounded-full border border-border/50">
               <button
                 onClick={() => setTheme("system")}
                 className={cn(
                   "p-1.5 rounded-full transition-all",
-                  theme === "system" ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"
+                  theme === "system"
+                    ? "bg-background shadow-sm text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <Monitor className="h-3.5 w-3.5" />
@@ -134,7 +157,9 @@ export function UserProfile() {
                 onClick={() => setTheme("light")}
                 className={cn(
                   "p-1.5 rounded-full transition-all",
-                  theme === "light" ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"
+                  theme === "light"
+                    ? "bg-background shadow-sm text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <Sun className="h-3.5 w-3.5" />
@@ -143,7 +168,9 @@ export function UserProfile() {
                 onClick={() => setTheme("dark")}
                 className={cn(
                   "p-1.5 rounded-full transition-all",
-                  theme === "dark" ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"
+                  theme === "dark"
+                    ? "bg-background shadow-sm text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <Moon className="h-3.5 w-3.5" />
@@ -153,27 +180,25 @@ export function UserProfile() {
         </div>
 
         <DropdownMenuSeparator className="bg-border/50" />
-        
+
         <DropdownMenuGroup>
           {user?.role === "admin" && (
-            <DropdownMenuItem asChild className="cursor-pointer gap-2 rounded-lg py-2 bg-primary/5 text-primary hover:bg-primary/10 transition-colors">
-              <Link href="/admin/queue" className="flex items-center gap-2 w-full">
+            <DropdownMenuItem
+              asChild
+              className="cursor-pointer gap-2 rounded-lg py-2 bg-primary/5 text-primary hover:bg-primary/10 transition-colors"
+            >
+              <Link
+                href="/admin/queue"
+                className="flex items-center gap-2 w-full"
+              >
                 <ShieldCheck className="w-4 h-4" />
                 <span className="font-bold">Moderation Queue</span>
               </Link>
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem className="cursor-pointer gap-2 rounded-lg py-2">
-            <Settings className="w-4 h-4 text-muted-foreground" />
-            <span>Settings</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem className="cursor-pointer gap-2 rounded-lg py-2">
-            <Heart className="w-4 h-4 text-muted-foreground" />
-            <span>Favorites</span>
-          </DropdownMenuItem>
 
           {user?.role === "user" && !user?.roleRequest && (
-            <DropdownMenuItem 
+            <DropdownMenuItem
               className="cursor-pointer gap-2 rounded-lg py-2 mt-1 bg-secondary/50 hover:bg-secondary border border-border/50"
               onClick={handleRoleRequest}
               disabled={loadingRequest}
@@ -181,15 +206,41 @@ export function UserProfile() {
               <ShieldCheck className="w-4 h-4 text-primary" />
               <div className="flex flex-col">
                 <span className="font-bold text-[11px]">Apply for Admin</span>
-                <span className="text-[9px] text-muted-foreground">Request access to moderation tools</span>
+                <span className="text-[9px] text-muted-foreground">
+                  Request access to moderation tools
+                </span>
               </div>
             </DropdownMenuItem>
           )}
         </DropdownMenuGroup>
-        
+
         <DropdownMenuSeparator className="bg-border/50" />
-        
-        <DropdownMenuItem 
+
+        <DropdownMenuItem
+          asChild
+          className="cursor-pointer gap-2 rounded-lg py-2 group/settings"
+        >
+          <Link href="/settings" className="flex items-center gap-2 w-full">
+            <SettingsIcon className="w-4 h-4 text-muted-foreground group-hover/settings:text-primary transition-colors" />
+            <span>System Settings</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          asChild
+          className="cursor-pointer gap-2 rounded-lg py-2 group/profile"
+        >
+          <Link href="/profile" className="flex items-center gap-2 w-full">
+            <UserIcon className="w-4 h-4 text-muted-foreground group-hover/profile:text-primary transition-colors" />
+            <span>User Profile</span>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem className="cursor-pointer gap-2 rounded-lg py-2">
+          <Heart className="w-4 h-4 text-muted-foreground" />
+          <span>Favorites</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
           className="cursor-pointer gap-2 rounded-lg py-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
           onClick={() => authClient.signOut()}
         >
@@ -200,4 +251,3 @@ export function UserProfile() {
     </DropdownMenu>
   );
 }
-

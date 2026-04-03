@@ -37,8 +37,13 @@ export default async function Home() {
               <span className="font-bold text-lg tracking-tight hidden sm:block uppercase text-foreground font-display leading-none">
                 OSINT MAP
               </span>
-              <span className="text-[10px] font-bold text-foreground/60 uppercase tracking-[0.2em] leading-none mt-1.5 hidden sm:block">
-                {new Date().toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric" })}
+              <span className="text-[10px] font-bold text-foreground/85 uppercase tracking-[0.2em] leading-none mt-1.5 hidden sm:block">
+                {new Date().toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
               </span>
             </div>
           </div>
@@ -73,7 +78,7 @@ export default async function Home() {
               >
                 <Link href="/admin">
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  Terminal
+                  Admin
                 </Link>
               </Button>
             )}
