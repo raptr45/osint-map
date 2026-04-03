@@ -84,37 +84,37 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(0.12 0.01 250); /* Deeper, slightly blueish background */
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: oklch(0.16 0.01 250);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: oklch(0.16 0.01 250);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
+  --primary: oklch(0.65 0.2 260); /* Vibrant Indigo-Blue primary */
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.25 0.02 250);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
+  --muted: oklch(0.2 0.02 250);
+  --muted-foreground: oklch(0.7 0.01 250);
+  --accent: oklch(0.3 0.05 260);
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.205 0 0);
+  --destructive: oklch(0.6 0.18 25);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.65 0.2 260 / 50%);
+  --chart-1: oklch(0.65 0.2 260);
+  --chart-2: oklch(0.55 0.15 280);
+  --chart-3: oklch(0.75 0.1 200);
+  --chart-4: oklch(0.85 0.1 160);
+  --chart-5: oklch(0.95 0.05 120);
+  --sidebar: oklch(0.14 0.01 250);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: oklch(0.65 0.2 260);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent: oklch(0.25 0.02 250);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.65 0.2 260 / 50%);
 }
 
 @layer base {
@@ -130,20 +130,46 @@
 }
 
 @layer components {
-  /* DRY Tactical Components */
+  /* DRY Premium Components */
   .tactical-card {
-    @apply bg-card/30 backdrop-blur-xl border border-border/40 transition-all hover:bg-card/50 relative overflow-hidden;
+    @apply bg-card/40 backdrop-blur-2xl border border-white/10 transition-all hover:bg-card/60 relative overflow-hidden rounded-3xl shadow-2xl;
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.05), 0 20px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+  
+  .premium-glow {
+    @apply absolute -inset-[100%] opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none;
+    background: radial-gradient(circle at center, oklch(var(--primary) / 0.15) 0%, transparent 70%);
   }
   
   .tactical-input {
-    @apply w-full bg-background/50 border border-border/40 rounded-xl px-4 h-11 text-xs focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-muted-foreground/50;
+    @apply w-full bg-secondary/20 border border-white/5 rounded-2xl px-5 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-secondary/40 transition-all placeholder:text-muted-foreground/30 shadow-inner;
   }
   
   .tactical-btn {
-    @apply h-10 rounded-xl gap-2 text-xs font-semibold uppercase tracking-wide shadow-lg shadow-primary/10 transition-all;
+    @apply h-12 rounded-2xl gap-3 px-6 text-sm font-bold tracking-tight shadow-xl shadow-primary/10 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center;
+    background: linear-gradient(135deg, oklch(var(--primary)) 0%, oklch(var(--primary) / 0.8) 100%);
+    @apply text-primary-foreground;
+  }
+
+  .tactical-btn-outline {
+    @apply h-12 rounded-2xl gap-3 px-6 text-sm font-bold tracking-tight border border-white/10 bg-white/5 transition-all hover:bg-white/10 hover:border-white/20 active:scale-[0.98] flex items-center justify-center;
   }
   
   .tactical-badge {
-    @apply font-black tracking-widest uppercase border;
+    @apply font-bold tracking-tight px-3 py-1 rounded-full text-[10px] border border-white/10 shadow-sm transition-all;
   }
+
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)];
+  }
+}
+
+/* Base style overrides */
+button { @apply cursor-pointer; }
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: oklch(var(--foreground));
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset;
+  transition: background-color 5000s ease-in-out 0s;
 }
